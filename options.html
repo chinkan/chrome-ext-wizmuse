@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Website Summarizer Options</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+            }
+            label,
+            select,
+            input {
+                display: block;
+                margin-bottom: 10px;
+            }
+            button {
+                margin-top: 20px;
+            }
+            #loading-models {
+                display: none;
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Website Summarizer Options</h1>
+        <form id="options-form">
+            <label for="llm-provider">LLM Provider:</label>
+            <select id="llm-provider" name="llm-provider">
+                <option value="openai">OpenAI</option>
+                <option value="claude">Claude AI</option>
+                <option value="ollama">Ollama</option>
+                <option value="groq">Groq</option>
+            </select>
+            <label for="api-key">API Key:</label>
+            <input
+                type="text"
+                id="api-key"
+                name="api-key"
+                placeholder="Enter API Key"
+            />
+            <label for="endpoint">Endpoint:</label>
+            <input
+                type="text"
+                id="endpoint"
+                name="endpoint"
+                placeholder="Enter endpoint URL"
+            />
+            <label for="model">Model:</label>
+            <select id="model" name="model">
+                <option value="">Select a model</option>
+                <!-- Models will be dynamically loaded here -->
+            </select>
+            <div
+                id="ollama-notification"
+                style="display: none; color: red; margin-top: 10px"
+            >
+                You need to add chrome-extension://* to OLLAMA_ORIGINS. E.g.
+                OLLAMA_ORIGINS=chrome-extension://* ollama serve
+            </div>
+            <button type="submit">Save</button>
+        </form>
+        <div id="loading-models">Loading models...</div>
+        <script type="module" src="options.js"></script>
+    </body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Website Summarizer</title>
+        <link rel="stylesheet" type="text/css" href="popup.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <div id="sidebar">
+            <h1>Website Summarizer</h1>
+            <button id="read-button">Read</button>
+            <div id="loading-indicator" class="loader" style="display: none"
+                >Loading...</div
+            >
+            <div id="error-message" style="display: none; color: red"></div>
+            <div id="summary-container">
+                <h2>Summary</h2>
+                <div id="summary"></div>
+                <!-- <h3>Featured Points</h3>
+                <ul id="featured-points"></ul>
+                <h3>Full Summary</h3>
+                <div id="full-summary"></div>
+                <h3>Examples</h3>
+                <div id="examples"></div>
+                <h3>Tags</h3>
+                <div id="tags"></div> -->
+            </div>
+            <div id="share-buttons">
+                <button id="share-twitter">Share on Twitter</button>
+                <button id="share-facebook">Share on Facebook</button>
+                <button id="share-linkedin">Share on LinkedIn</button>
+            </div>
+            <button id="add-to-notion">Add to Notion</button>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>
