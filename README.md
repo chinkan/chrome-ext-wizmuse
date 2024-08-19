@@ -10,9 +10,17 @@ Website Summarizer is a browser extension that allows users to summarize web pag
     ```bash
     git clone https://github.com/chinkan/chrome-ext-website-summarizer.git
     ```
-2. Open Chrome and go to `chrome://extensions/`.
-3. Enable "Developer mode" in the top right corner.
-4. Click on "Load unpacked" and select the project directory.
+2. Change directory to the project folder:
+    ```bash
+    cd chrome-ext-website-summarizer
+    ```
+3. Clone the drawdown repository into the `lib` directory:
+    ```bash
+    git clone https://github.com/adamvleggett/drawdown.git lib/drawdown
+    ```
+4. Open Chrome and go to `chrome://extensions/`.
+5. Enable "Developer mode" in the top right corner.
+6. Click on "Load unpacked" and select the project directory.
 
 ## Contribute
 
