@@ -12,10 +12,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         result.llmProvider,
                         result.llmConfig
                     );
-                    const summary = await provider.summarize(
-                        PromptFactory.getPrompt('summarize', request.text)
+                    const prompts = PromptFactory.getPrompt(
+                        'summarize',
+                        request.text
                     );
-                    console.log('result', JSON.stringify(summary));
+                    const summary = await provider.summarize(
+                        prompts.userPrompt,
+                        prompts.systemPrompt
+                    );
                     sendResponse({ summary });
                 } catch (error) {
                     console.error('Error in background script:', error);

@@ -17,6 +17,10 @@ class GroqProvider extends LLMProvider {
                 body: JSON.stringify({
                     messages: [
                         {
+                            role: 'system',
+                            content: systemPrompt,
+                        },
+                        {
                             role: 'user',
                             content: text,
                         },

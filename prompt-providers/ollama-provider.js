@@ -7,7 +7,6 @@ class OllamaProvider extends LLMProvider {
 
     async summarize(text, systemPrompt) {
         // 新增 systemPrompt 參數
-        console.error('model is ', this.model);
         const response = await fetch(`${this.endpoint}/api/generate`, {
             method: 'POST',
             headers: {

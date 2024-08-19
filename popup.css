@@ -50,10 +50,7 @@ h3 {
     margin-bottom: 16px;
 }
 
-#short-summary,
-#full-summary,
-#examples,
-#tags {
+#summary {
     font-size: 14px;
     color: #5f6368;
     margin-bottom: 12px;

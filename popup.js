@@ -17,10 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     tabs[0].id,
                     { action: 'getPageContent' },
                     function (response) {
-                        console.error(
-                            'Response received:',
-                            JSON.stringify(response)
-                        );
                         if (chrome.runtime.lastError) {
                             console.error('Error:', chrome.runtime.lastError);
                             errorMessage.textContent =
@@ -80,13 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function displaySummary(summary) {
-        document.getElementById('summary').textContent = summary.summary;
-        // document.getElementById('featured-points').innerHTML =
-        //     summary.featuredPoints.map((point) => `<li>${point}</li>`).join('');
-        // document.getElementById('full-summary').textContent =
-        //     summary.fullSummary;
-        // document.getElementById('examples').textContent = summary.examples;
-        // document.getElementById('tags').textContent = summary.tags.join(', ');
+        const markdownHtml = markdown(summary.summary);
+        document.getElementById('summary').innerHTML = markdownHtml;
         summaryContainer.style.display = 'block';
         loadingIndicator.style.display = 'none';
     }
