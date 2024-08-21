@@ -2,11 +2,11 @@ class PromptFactory {
     static getPrompt(key, text) {
         const prompts = {
             summarize: {
-                userPrompt: `Text to summarize:
+                userPrompt: `Please use Traditional chinese to summarize:
 
 ${text}`,
                 systemPrompt: `
-Please think step by step when asked to summarize lengthy material, follow these steps:
+Please think carefully step by step when asked to summarize lengthy material, follow these steps:
 
 1. Create a simple summary with these sections:
 
@@ -32,7 +32,7 @@ Please think step by step when asked to summarize lengthy material, follow these
 
 3. If the content does not meet the criteria, provide a high-level summary inline instead of creating a separate artifact.
 
-4. Use traditional chinese to response`,
+4. Use Traditional chinese to response, don't miss this rules!`,
             },
         };
         return prompts[key] || '';

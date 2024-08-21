@@ -37,6 +37,10 @@ class OpenAIProvider extends LLMProvider {
         const data = await response.json();
         return data.data.map((a) => ({ name: a.id, value: a.id })); // 返回模型列表
     }
+
+    getDefaultEndpoint() {
+        return 'https://api.openai.com/v1';
+    }
 }
 
 export default OpenAIProvider;

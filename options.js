@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedProvider = this.value;
         ollamaNotification.style.display =
             selectedProvider === 'ollama' ? 'block' : 'none';
+
+        // Get the instance of the selected provider
+        const config = {
+            apiKey: apiKeyInput.value,
+            endpoint: endpointInput.value,
+            model: modelSelect.value,
+        };
+        const providerInstance = LLMProviderFactory.getProvider(
+            selectedProvider,
+            config
+        );
+
+        // Update the endpoint to the default endpoint
+        endpointInput.value = providerInstance.getDefaultEndpoint();
+
         loadModels(selectedProvider);
     });
 
@@ -48,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadModels(provider, savedConfig = {}) {
         const config = {
             apiKey: apiKeyInput.value,
-            endpoint: endpointInput.value,
+            endpoint: endpointInput.value, // Use the current endpoint value
             model: savedConfig.model || '',
         };
 
@@ -62,8 +77,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 modelSelect.innerHTML = '';
                 models.forEach((model) => {
                     const option = document.createElement('option');
-                    option.value = model.value; // Assuming model has an 'id' property
-                    option.textContent = model.name; // Adjust as necessary for display
+                    option.value = model.value;
+                    option.textContent = model.name;
                     modelSelect.appendChild(option);
                 });
             })
