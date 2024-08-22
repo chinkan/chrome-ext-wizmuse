@@ -33,11 +33,14 @@ We welcome contributions! To contribute to the project:
 
 ## TODO
 
--   [] Implement the summarization functionality for the Claude provider.
--   [] Implement the share to society functionality
--   [] Implement the Add to Notion functionality
--   [] Improve error handling and user feedback.
--   [] Enhance the UI for better user experience.
+-   [x] Implement the summarization functionality for the OpenAI provider.
+-   [x] Implement the summarization functionality for the Anthropic provider.
+-   [x] Implement the summarization functionality for the Groq provider.
+-   [x] Implement the summarization functionality for the Ollama provider.
+-   [ ] Implement the share to society functionality
+-   [ ] Implement the Add to Notion functionality
+-   [ ] Improve error handling and user feedback.
+-   [ ] Enhance the UI for better user experience.
 -   And more...
 
 ## License
