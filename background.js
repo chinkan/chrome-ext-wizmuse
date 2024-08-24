@@ -30,3 +30,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Indicates that the response is sent asynchronously
     }
 });
+
+chrome.action.onClicked.addListener((tab) => {
+    chrome.windows.create({
+        url: 'popup.html',
+        type: 'popup',
+        width: 400,
+        height: 600,
+        left: screen.width - 400,
+        top: 0,
+    });
+});

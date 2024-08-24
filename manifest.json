@@ -3,7 +3,8 @@
     "name": "Website Summarizer",
     "version": "0.1",
     "description": "Summarize websites using various LLM providers",
-    "permissions": ["activeTab", "storage", "scripting"],
+    "permissions": ["activeTab", "storage", "scripting", "identity", "tabs"],
+    "host_permissions": ["https://api.notion.com/*"],
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
@@ -17,7 +18,6 @@
         "service_worker": "background.js",
         "type": "module"
     },
-    "host_permissions": ["<all_urls>"],
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
