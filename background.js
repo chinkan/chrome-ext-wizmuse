@@ -31,13 +31,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-chrome.action.onClicked.addListener((tab) => {
-    chrome.windows.create({
-        url: 'popup.html',
-        type: 'popup',
-        width: 400,
-        height: 600,
-        left: screen.width - 400,
-        top: 0,
-    });
+chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((error) => console.error(error));
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    console.log('chrome onUpdated', tabId, changeInfo, tab);
+    if (changeInfo.status === 'complete' && tab.url) {
+        chrome.sidePanel.setOptions({
+            tabId,
+            path: 'sidepanel.html',
+            enabled: true,
+        });
+    } else {
+        chrome.sidePanel.setOptions({
+            tabId,
+            path: 'sidepanel.html',
+            enabled: false,
+        });
+    }
 });

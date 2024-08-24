@@ -3,7 +3,14 @@
     "name": "Website Summarizer",
     "version": "0.1",
     "description": "Summarize websites using various LLM providers",
-    "permissions": ["activeTab", "storage", "scripting", "identity", "tabs"],
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting",
+        "identity",
+        "tabs",
+        "sidePanel"
+    ],
     "host_permissions": ["https://api.notion.com/*"],
     "action": {
         "default_popup": "popup.html",
@@ -23,5 +30,8 @@
             "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
-    ]
+    ],
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    }
 }
