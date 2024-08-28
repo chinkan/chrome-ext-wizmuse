@@ -23,7 +23,9 @@ class OpenAIProvider extends LLMProvider {
             }),
         });
         const data = await response.json();
-        return data.choices[0].message.content.trim();
+        return {
+            summary: data.choices[0].message.content.trim(),
+        };
     }
 
     async getModelLists() {
