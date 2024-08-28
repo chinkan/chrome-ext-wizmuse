@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadModels(provider, savedConfig = {}) {
         const config = {
             apiKey: apiKeyInput.value,
-            endpoint: endpointInput.value, // Use the current endpoint value
+            endpoint: endpointInput.value,
             model: savedConfig.model || '',
         };
 
@@ -81,6 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     option.textContent = model.name;
                     modelSelect.appendChild(option);
                 });
+
+                // 設置之前選擇的模型
+                if (savedConfig.model) {
+                    modelSelect.value = savedConfig.model;
+                }
             })
             .catch((error) => {
                 console.error('Error loading models:', error);

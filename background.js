@@ -20,10 +20,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         prompts.userPrompt,
                         prompts.systemPrompt
                     );
-                    sendResponse({ summary });
+                    if (summary && typeof summary.summary === 'string') {
+                        sendResponse({ summary });
+                    } else {
+                        throw new Error(
+                            'Invalid summary format received from provider'
+                        );
+                    }
                 } catch (error) {
                     console.error('Error in background script:', error);
-                    sendResponse({ error: error.message });
+                    sendResponse({
+                        error: error.message || 'An unknown error occurred',
+                    });
                 }
             }
         );

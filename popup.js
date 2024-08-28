@@ -1,11 +1,20 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const readButton = document.getElementById('read-button');
     const loadingIndicator = document.getElementById('loading-indicator');
     const errorMessage = document.getElementById('error-message');
     const summaryContainer = document.getElementById('summary-container');
 
-    readButton.addEventListener('click', function () {
-        console.log('Reading button clicked');
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const currentUrl = tabs[0].url;
+        chrome.storage.local.get([currentUrl], function (result) {
+            if (result[currentUrl]) {
+                displaySummary(result[currentUrl]);
+            } else {
+                generateSummary(currentUrl);
+            }
+        });
+    });
+
+    function generateSummary(url) {
         loadingIndicator.style.display = 'block';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
@@ -18,62 +27,43 @@ document.addEventListener('DOMContentLoaded', function () {
                     { action: 'getPageContent' },
                     function (response) {
                         if (chrome.runtime.lastError) {
-                            console.error('Error:', chrome.runtime.lastError);
-                            errorMessage.textContent =
-                                'Error: ' + chrome.runtime.lastError.message;
-                            errorMessage.style.display = 'block';
-                            loadingIndicator.style.display = 'none';
+                            handleError(chrome.runtime.lastError.message);
                             return;
                         }
                         if (response && response.content) {
                             chrome.runtime.sendMessage(
                                 { action: 'summarize', text: response.content },
                                 function (response) {
-                                    console.log(
-                                        'Summarization response:',
-                                        response
-                                    );
                                     if (chrome.runtime.lastError) {
-                                        console.error(
-                                            'Runtime error:',
-                                            chrome.runtime.lastError
+                                        handleError(
+                                            chrome.runtime.lastError.message
                                         );
-                                        errorMessage.textContent =
-                                            'Error: ' +
-                                            chrome.runtime.lastError.message;
-                                        errorMessage.style.display = 'block';
-                                        loadingIndicator.style.display = 'none';
                                     } else if (response && response.error) {
-                                        console.error(
-                                            'Summarization error:',
-                                            response.error
-                                        );
-                                        errorMessage.textContent =
-                                            'Error: ' + response.error;
-                                        errorMessage.style.display = 'block';
-                                        loadingIndicator.style.display = 'none';
+                                        handleError(response.error);
                                     } else if (response && response.summary) {
-                                        displaySummary(response.summary);
+                                        chrome.storage.local.set(
+                                            { [url]: response.summary },
+                                            function () {
+                                                displaySummary(
+                                                    response.summary
+                                                );
+                                            }
+                                        );
                                     } else {
-                                        errorMessage.textContent =
-                                            'Error: Invalid summarization response';
-                                        errorMessage.style.display = 'block';
-                                        loadingIndicator.style.display = 'none';
+                                        handleError(
+                                            'Invalid summarization response'
+                                        );
                                     }
                                 }
                             );
                         } else {
-                            console.error('Invalid response:', response);
-                            errorMessage.textContent =
-                                'Error: Invalid response';
-                            errorMessage.style.display = 'block';
-                            loadingIndicator.style.display = 'none';
+                            handleError('Invalid response');
                         }
                     }
                 );
             }
         );
-    });
+    }
 
     function displaySummary(summary) {
         const markdownHtml = markdown(summary.summary);
@@ -82,32 +72,59 @@ document.addEventListener('DOMContentLoaded', function () {
         loadingIndicator.style.display = 'none';
     }
 
+    function handleError(message) {
+        console.error('Error:', message);
+        errorMessage.textContent = 'Error: ' + message;
+        errorMessage.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+    }
+
     document
-        .getElementById('share-twitter')
-        .addEventListener('click', shareTwitter);
+        .getElementById('copy-summary')
+        .addEventListener('click', copySummary);
+
+    function copySummary() {
+        const summaryContent = document.getElementById('summary').innerText;
+        navigator.clipboard.writeText(summaryContent).then(
+            function () {
+                console.log('摘要已成功複製到剪貼板');
+                showTooltip('已複製到剪貼板');
+            },
+            function (err) {
+                console.error('無法複製摘要: ', err);
+                showTooltip('複製失敗');
+            }
+        );
+    }
+
+    function showTooltip(message) {
+        const tooltip = document.createElement('div');
+        tooltip.textContent = message;
+        tooltip.className = 'tooltip';
+        document.body.appendChild(tooltip);
+
+        // 強制瀏覽器重新計算樣式
+        tooltip.offsetHeight;
+
+        setTimeout(() => {
+            tooltip.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(tooltip);
+            }, 500);
+        }, 2000);
+    }
+
     document
-        .getElementById('share-facebook')
-        .addEventListener('click', shareFacebook);
-    document
-        .getElementById('share-linkedin')
-        .addEventListener('click', shareLinkedIn);
-    document
-        .getElementById('add-to-notion')
-        .addEventListener('click', addToNotion);
+        .getElementById('refresh-summary')
+        .addEventListener('click', refreshSummary);
+
+    function refreshSummary() {
+        chrome.tabs.query(
+            { active: true, currentWindow: true },
+            function (tabs) {
+                const currentUrl = tabs[0].url;
+                generateSummary(currentUrl);
+            }
+        );
+    }
 });
-
-function shareTwitter() {
-    // Implement Twitter sharing
-}
-
-function shareFacebook() {
-    // Implement Facebook sharing
-}
-
-function shareLinkedIn() {
-    // Implement LinkedIn sharing
-}
-
-function addToNotion() {
-    // Implement Notion integration
-}
