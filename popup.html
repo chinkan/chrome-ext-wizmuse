@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8" />
         <title>Website Summarizer</title>
         <link rel="stylesheet" type="text/css" href="popup.css" />
         <link
@@ -14,13 +15,16 @@
         <script type="text/javascript" src="lib/drawdown/drawdown.js"></script>
     </head>
     <body>
-        <div id="sidebar">
-            <div id="copy-button">
-                <button id="refresh-summary">
+        <div id="popup">
+            <div id="toolbar">
+                <button class="toolbar-button" id="refresh-summary">
                     <i class="material-icons">refresh</i>
                 </button>
-                <button id="copy-summary">
+                <button class="toolbar-button" id="copy-summary">
                     <i class="material-icons">content_copy</i>
+                </button>
+                <button class="toolbar-button" id="open-options">
+                    <i class="material-icons">settings</i>
                 </button>
             </div>
             <div id="loading-indicator" class="loader" style="display: none"

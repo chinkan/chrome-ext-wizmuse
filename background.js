@@ -5,12 +5,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
     if (request.action === 'summarize') {
         chrome.storage.sync.get(
-            ['llmProvider', 'llmConfig'],
+            ['llmConfigs', 'selectedLLMIndex'],
             async (result) => {
                 try {
+                    console.error(JSON.stringify(result));
+                    const defaultConfig =
+                        result.llmConfigs[result.selectedLLMIndex];
+                    console.error(JSON.stringify(defaultConfig));
                     const provider = LLMProviderFactory.getProvider(
-                        result.llmProvider,
-                        result.llmConfig
+                        defaultConfig.provider,
+                        defaultConfig
                     );
                     const prompts = PromptFactory.getPrompt(
                         'summarize',
@@ -36,5 +40,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         );
         return true; // Indicates that the response is sent asynchronously
+    }
+});
+
+chrome.runtime.onInstalled.addListener(function (details) {
+    if (details.reason === 'install') {
+        chrome.runtime.openOptionsPage();
     }
 });

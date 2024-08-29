@@ -8,10 +8,6 @@ class LLMProvider {
     async summarize(text, systemPrompt) {}
 
     async getModelLists() {}
-
-    getDefaultEndpoint() {
-        return '';
-    }
 }
 
 export default LLMProvider;

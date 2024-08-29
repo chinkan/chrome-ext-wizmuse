@@ -58,10 +58,6 @@ class ClaudeProvider extends LLMProvider {
             value: model.name,
         }));
     }
-
-    getDefaultEndpoint() {
-        return 'https://api.anthropic.com';
-    }
 }
 
 export default ClaudeProvider;
