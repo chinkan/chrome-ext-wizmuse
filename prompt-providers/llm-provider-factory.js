@@ -19,6 +19,21 @@ class LLMProviderFactory {
                 throw new Error('Unsupported LLM provider');
         }
     }
+
+    static getDefaultEndpoint(provider) {
+        switch (provider) {
+            case 'openai':
+                return 'https://api.openai.com/v1';
+            case 'claude':
+                return 'https://api.anthropic.com';
+            case 'ollama':
+                return 'http://localhost:11434';
+            case 'groq':
+                return 'https://api.groq.com/openai/v1';
+            default:
+                throw new Error('Unsupported LLM provider');
+        }
+    }
 }
 
 export default LLMProviderFactory;

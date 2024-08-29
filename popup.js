@@ -5,16 +5,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         const currentUrl = tabs[0].url;
+        const currentTitle = tabs[0].title;
         chrome.storage.local.get([currentUrl], function (result) {
             if (result[currentUrl]) {
                 displaySummary(result[currentUrl]);
             } else {
-                generateSummary(currentUrl);
+                generateSummary(currentUrl, currentTitle);
             }
         });
     });
 
-    function generateSummary(url) {
+    function generateSummary(url, title) {
         loadingIndicator.style.display = 'block';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
@@ -42,7 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                         handleError(response.error);
                                     } else if (response && response.summary) {
                                         chrome.storage.local.set(
-                                            { [url]: response.summary },
+                                            {
+                                                [url]: {
+                                                    summary: response.summary,
+                                                    title: title,
+                                                    timestamp: Date.now(),
+                                                },
+                                            },
                                             function () {
                                                 displaySummary(
                                                     response.summary
@@ -137,4 +144,74 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.open(chrome.runtime.getURL('options.html'));
             }
         });
+
+    function showModelSelector() {
+        chrome.storage.sync.get(['llmConfigs'], function (result) {
+            const modelSelector = document.createElement('select');
+            modelSelector.id = 'model-selector';
+            result.llmConfigs.forEach((config, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${config.provider} - ${config.model}`;
+                modelSelector.appendChild(option);
+            });
+            document
+                .getElementById('regenerate-container')
+                .appendChild(modelSelector);
+        });
+    }
+
+    document
+        .getElementById('regenerate-summary')
+        .addEventListener('click', function () {
+            const selectedModelIndex =
+                document.getElementById('model-selector').value;
+            chrome.tabs.query(
+                { active: true, currentWindow: true },
+                function (tabs) {
+                    chrome.tabs.sendMessage(
+                        tabs[0].id,
+                        { action: 'getPageContent' },
+                        function (response) {
+                            if (response && response.content) {
+                                chrome.storage.sync.get(
+                                    ['llmConfigs'],
+                                    function (result) {
+                                        const selectedConfig =
+                                            result.llmConfigs[
+                                                selectedModelIndex
+                                            ];
+                                        chrome.runtime.sendMessage(
+                                            {
+                                                action: 'summarize',
+                                                text: response.content,
+                                                config: selectedConfig,
+                                            },
+                                            function (response) {
+                                                if (
+                                                    response &&
+                                                    response.summary
+                                                ) {
+                                                    displaySummary(
+                                                        response.summary
+                                                    );
+                                                } else if (
+                                                    response &&
+                                                    response.error
+                                                ) {
+                                                    handleError(response.error);
+                                                }
+                                            }
+                                        );
+                                    }
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+        });
+
+    // 在生成摘要後調用此函數
+    showModelSelector();
 });

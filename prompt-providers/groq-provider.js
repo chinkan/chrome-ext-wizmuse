@@ -47,10 +47,6 @@ class GroqProvider extends LLMProvider {
         const data = await response.json();
         return data.data.map((a) => ({ name: a.id, value: a.id })); // 返回模型列表
     }
-
-    getDefaultEndpoint() {
-        return 'https://api.groq.com/openai/v1';
-    }
 }
 
 export default GroqProvider;

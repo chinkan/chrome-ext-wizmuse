@@ -1,66 +1,118 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8" />
         <title>Website Summarizer Options</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
-            }
-            label,
-            select,
-            input {
-                display: block;
-                margin-bottom: 10px;
-            }
-            button {
-                margin-top: 20px;
-            }
-            #loading-models {
-                display: none;
-                color: #666;
-            }
-        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="options.css" />
     </head>
     <body>
-        <h1>Website Summarizer Options</h1>
-        <form id="options-form">
-            <label for="llm-provider">LLM Provider:</label>
-            <select id="llm-provider" name="llm-provider">
-                <option value="openai">OpenAI</option>
-                <option value="claude">Claude AI</option>
-                <option value="ollama">Ollama</option>
-                <option value="groq">Groq</option>
-            </select>
-            <label for="api-key">API Key:</label>
-            <input
-                type="text"
-                id="api-key"
-                name="api-key"
-                placeholder="Enter API Key"
-            />
-            <label for="endpoint">Endpoint:</label>
-            <input
-                type="text"
-                id="endpoint"
-                name="endpoint"
-                placeholder="Enter endpoint URL"
-            />
-            <label for="model">Model:</label>
-            <select id="model" name="model">
-                <option value="">Select a model</option>
-                <!-- Models will be dynamically loaded here -->
-            </select>
-            <div
-                id="ollama-notification"
-                style="display: none; color: red; margin-top: 10px"
-            >
-                You need to add chrome-extension://* to OLLAMA_ORIGINS. E.g.
-                OLLAMA_ORIGINS=chrome-extension://* ollama serve
+        <div id="sidebar">
+            <div class="menu-item active" data-page="about">About</div>
+            <div class="menu-item" data-page="options">Options</div>
+            <div class="menu-item" data-page="history">History</div>
+        </div>
+        <div id="content">
+            <div id="about-page">
+                <h1>About Website Summarizer</h1>
+                <div class="profile-container">
+                    <img
+                        src="images/profile.jpeg"
+                        alt="個人資料圖片"
+                        class="profile-image"
+                    />
+                    <div class="profile-info">
+                        <p
+                            ><i class="material-icons">person</i>
+                            作者：chinkan.ai</p
+                        >
+                        <p
+                            ><i class="material-icons">code</i> GitHub：<a
+                                href="https://github.com/chinkan"
+                                target="_blank"
+                                >github.com/chinkan</a
+                            ></p
+                        >
+                        <p
+                            ><i class="material-icons">forum</i> Threads：<a
+                                href="https://www.threads.net/@chinkan.ai"
+                                target="_blank"
+                                >@chinkan.ai</a
+                            ></p
+                        >
+                    </div>
+                </div>
             </div>
-            <button type="submit">Save</button>
-        </form>
-        <div id="loading-models">Loading models...</div>
+            <div id="options-page" style="display: none">
+                <h1>Options</h1>
+                <button id="add-config-btn">新增配置</button>
+                <table id="llm-configs-table">
+                    <thead>
+                        <tr>
+                            <th>名稱</th>
+                            <th>Provider</th>
+                            <th>API 金鑰</th>
+                            <th>模型</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <form id="options-form" style="display: none">
+                    <input
+                        type="text"
+                        id="config-name"
+                        placeholder="配置名稱"
+                        required
+                    />
+                    <select id="llm-provider">
+                        <option value="openai">OpenAI</option>
+                        <option value="claude">Claude AI</option>
+                        <option value="ollama">Ollama</option>
+                        <option value="groq">Groq</option>
+                    </select>
+                    <div id="endpoint-display" class="endpoint-display"></div>
+                    <textarea
+                        id="endpoint"
+                        placeholder="API 端點"
+                        style="display: none"
+                    ></textarea>
+                    <input
+                        type="text"
+                        id="api-key"
+                        placeholder="API 金鑰"
+                        required
+                    />
+                    <select id="model"></select>
+                    <button type="submit">保存</button>
+                    <button type="button" id="cancel-form">取消</button>
+                </form>
+                <label for="default-llm-config">預設 LLM 配置：</label>
+                <select id="default-llm-config"></select>
+                <button id="save-default">保存預設配置</button>
+            </div>
+            <div id="history-page" style="display: none">
+                <h1>Summary History</h1>
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Title</th>
+                            <th>Summarized Time</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
         <script type="module" src="options.js"></script>
     </body>
 </html>

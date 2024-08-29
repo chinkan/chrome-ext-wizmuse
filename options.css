@@ -1,0 +1,115 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+}
+#sidebar {
+    width: 200px;
+    background-color: #f1f3f4;
+    padding: 20px;
+}
+#content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+.menu-item {
+    cursor: pointer;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+.menu-item:hover {
+    background-color: #e0e0e0;
+}
+.menu-item.active {
+    background-color: #d2e3fc;
+    color: #1a73e8;
+}
+h1 {
+    color: #202124;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 20px;
+}
+label,
+select,
+input {
+    display: block;
+    margin-bottom: 10px;
+}
+button {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #1765cc;
+}
+#loading-models {
+    display: none;
+    color: #666;
+}
+.endpoint-display {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+    margin-bottom: 10px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th,
+td {
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    text-align: left;
+}
+th {
+    background-color: #f1f3f4;
+}
+
+#about-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.profile-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+.profile-info {
+    text-align: center;
+}
+
+.profile-info p {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.profile-info .material-icons {
+    margin-right: 10px;
+    font-size: 20px;
+}

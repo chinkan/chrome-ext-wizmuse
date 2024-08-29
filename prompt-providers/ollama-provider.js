@@ -59,10 +59,6 @@ class OllamaProvider extends LLMProvider {
         const data = await response.json();
         return data.models.map((a) => ({ name: a.name, value: a.model })); // 返回所有模型選項
     }
-
-    getDefaultEndpoint() {
-        return 'http://localhost:11434';
-    }
 }
 
 export default OllamaProvider;
