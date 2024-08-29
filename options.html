@@ -47,12 +47,53 @@
                                 >@chinkan.ai</a
                             ></p
                         >
+                        <p>
+                            <a
+                                href="https://github.com/sponsors/chinkan"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style="
+                                    display: inline-block;
+                                    padding: 5px 16px;
+                                    font-size: 14px;
+                                    font-weight: 500;
+                                    line-height: 20px;
+                                    white-space: nowrap;
+                                    vertical-align: middle;
+                                    cursor: pointer;
+                                    user-select: none;
+                                    background-color: #24292e;
+                                    border: 1px solid #24292e;
+                                    border-radius: 6px;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                "
+                            >
+                                <svg
+                                    style="
+                                        vertical-align: middle;
+                                        margin-right: 5px;
+                                    "
+                                    height="16"
+                                    viewBox="0 0 16 16"
+                                    version="1.1"
+                                    width="16"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        fill="#ffffff"
+                                        d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"
+                                    ></path>
+                                </svg>
+                                GitHub Sponsor
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
             <div id="options-page" style="display: none">
                 <h1>Options</h1>
-                <button id="add-config-btn">新增配置</button>
+                <button id="add-config-btn" class="fab">+</button>
                 <table id="llm-configs-table">
                     <thead>
                         <tr>
@@ -60,42 +101,122 @@
                             <th>Provider</th>
                             <th>API 金鑰</th>
                             <th>模型</th>
+                            <th>API 端點</th>
                             <th>操作</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
-                <form id="options-form" style="display: none">
-                    <input
-                        type="text"
-                        id="config-name"
-                        placeholder="配置名稱"
-                        required
-                    />
-                    <select id="llm-provider">
-                        <option value="openai">OpenAI</option>
-                        <option value="claude">Claude AI</option>
-                        <option value="ollama">Ollama</option>
-                        <option value="groq">Groq</option>
-                    </select>
-                    <div id="endpoint-display" class="endpoint-display"></div>
-                    <textarea
-                        id="endpoint"
-                        placeholder="API 端點"
-                        style="display: none"
-                    ></textarea>
-                    <input
-                        type="text"
-                        id="api-key"
-                        placeholder="API 金鑰"
-                        required
-                    />
-                    <select id="model"></select>
-                    <button type="submit">保存</button>
-                    <button type="button" id="cancel-form">取消</button>
-                </form>
-                <label for="default-llm-config">預設 LLM 配置：</label>
-                <select id="default-llm-config"></select>
+                <div id="options-container" style="display: none">
+                    <form id="options-form">
+                        <div class="form-group">
+                            <label for="config-name">配置名稱：</label>
+                            <input
+                                id="config-name"
+                                type="text"
+                                placeholder="配置名稱"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="llm-provider">選擇 LLM 提供者：</label>
+                            <div id="llm-provider-grid">
+                                <label class="provider-option">
+                                    <input
+                                        type="radio"
+                                        name="llm-provider"
+                                        value="openai"
+                                    />
+                                    <img
+                                        src="images/logo-openai.svg"
+                                        alt="OpenAI"
+                                        class="provider-logo"
+                                    />
+                                    <span>OpenAI</span>
+                                </label>
+                                <label class="provider-option">
+                                    <input
+                                        type="radio"
+                                        name="llm-provider"
+                                        value="claude"
+                                    />
+                                    <img
+                                        src="images/logo-claude.svg"
+                                        alt="Claude AI"
+                                        class="provider-logo"
+                                    />
+                                    <span>Claude AI</span>
+                                </label>
+                                <label class="provider-option">
+                                    <input
+                                        type="radio"
+                                        name="llm-provider"
+                                        value="ollama"
+                                    />
+                                    <img
+                                        src="images/logo-ollama.png"
+                                        alt="Ollama"
+                                        class="provider-logo"
+                                    />
+                                    <span>Ollama</span>
+                                </label>
+                                <label class="provider-option">
+                                    <input
+                                        type="radio"
+                                        name="llm-provider"
+                                        value="groq"
+                                    />
+                                    <img
+                                        src="images/logo-groq.svg"
+                                        alt="Groq"
+                                        class="provider-logo"
+                                    />
+                                    <span>Groq</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="api-key">API 金鑰：</label>
+                            <input
+                                type="text"
+                                id="api-key"
+                                name="api-key"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="model">模型：</label>
+                            <select id="model" name="model" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="endpoint-display">API 端點：</label>
+                            <div
+                                id="endpoint-display"
+                                class="endpoint-display"
+                            ></div>
+                            <textarea
+                                id="endpoint"
+                                placeholder="API 端點"
+                                style="display: none"
+                            ></textarea>
+                        </div>
+                        <div class="form-group button-group">
+                            <button type="submit" class="primary-button"
+                                >保存</button
+                            >
+                            <button
+                                type="button"
+                                id="cancel-form"
+                                class="secondary-button"
+                                >取消</button
+                            >
+                        </div>
+                    </form>
+                </div>
+                <div class="form-group">
+                    <label for="default-llm-config">預設 LLM 配置：</label>
+                    <select id="default-llm-config"></select>
+                </div>
                 <button id="save-default">保存預設配置</button>
             </div>
             <div id="history-page" style="display: none">

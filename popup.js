@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-    function showModelSelector() {
+    function showModelSelector(callback) {
         chrome.storage.sync.get(['llmConfigs'], function (result) {
             const modelSelector = document.createElement('select');
             modelSelector.id = 'model-selector';
@@ -155,61 +155,72 @@ document.addEventListener('DOMContentLoaded', function () {
                 option.textContent = `${config.provider} - ${config.model}`;
                 modelSelector.appendChild(option);
             });
-            document
-                .getElementById('regenerate-container')
-                .appendChild(modelSelector);
+            const regenerateContainer = document.getElementById(
+                'regenerate-container'
+            );
+            regenerateContainer.innerHTML = '';
+            regenerateContainer.appendChild(modelSelector);
+
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = '確認';
+            confirmButton.addEventListener('click', () =>
+                callback(modelSelector.value)
+            );
+            regenerateContainer.appendChild(confirmButton);
         });
     }
 
     document
         .getElementById('regenerate-summary')
         .addEventListener('click', function () {
-            const selectedModelIndex =
-                document.getElementById('model-selector').value;
-            chrome.tabs.query(
-                { active: true, currentWindow: true },
-                function (tabs) {
-                    chrome.tabs.sendMessage(
-                        tabs[0].id,
-                        { action: 'getPageContent' },
-                        function (response) {
-                            if (response && response.content) {
-                                chrome.storage.sync.get(
-                                    ['llmConfigs'],
-                                    function (result) {
-                                        const selectedConfig =
-                                            result.llmConfigs[
-                                                selectedModelIndex
-                                            ];
-                                        chrome.runtime.sendMessage(
-                                            {
-                                                action: 'summarize',
-                                                text: response.content,
-                                                config: selectedConfig,
-                                            },
-                                            function (response) {
-                                                if (
-                                                    response &&
-                                                    response.summary
-                                                ) {
-                                                    displaySummary(
+            showModelSelector(function (selectedModelIndex) {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    function (tabs) {
+                        chrome.tabs.sendMessage(
+                            tabs[0].id,
+                            { action: 'getPageContent' },
+                            function (response) {
+                                if (response && response.content) {
+                                    chrome.storage.sync.get(
+                                        ['llmConfigs'],
+                                        function (result) {
+                                            const selectedConfig =
+                                                result.llmConfigs[
+                                                    selectedModelIndex
+                                                ];
+                                            chrome.runtime.sendMessage(
+                                                {
+                                                    action: 'summarize',
+                                                    text: response.content,
+                                                    config: selectedConfig,
+                                                },
+                                                function (response) {
+                                                    if (
+                                                        response &&
                                                         response.summary
-                                                    );
-                                                } else if (
-                                                    response &&
-                                                    response.error
-                                                ) {
-                                                    handleError(response.error);
+                                                    ) {
+                                                        displaySummary(
+                                                            response.summary
+                                                        );
+                                                    } else if (
+                                                        response &&
+                                                        response.error
+                                                    ) {
+                                                        handleError(
+                                                            response.error
+                                                        );
+                                                    }
                                                 }
-                                            }
-                                        );
-                                    }
-                                );
+                                            );
+                                        }
+                                    );
+                                }
                             }
-                        }
-                    );
-                }
-            );
+                        );
+                    }
+                );
+            });
         });
 
     // 在生成摘要後調用此函數

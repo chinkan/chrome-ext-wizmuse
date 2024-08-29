@@ -5,11 +5,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
     if (request.action === 'summarize') {
         chrome.storage.sync.get(
-            ['llmConfigs', 'defaultLLMConfig'],
+            ['llmConfigs', 'selectedLLMIndex'],
             async (result) => {
                 try {
+                    console.error(JSON.stringify(result));
                     const defaultConfig =
-                        result.llmConfigs[result.defaultLLMConfig];
+                        result.llmConfigs[result.selectedLLMIndex];
                     console.error(JSON.stringify(defaultConfig));
                     const provider = LLMProviderFactory.getProvider(
                         defaultConfig.provider,
