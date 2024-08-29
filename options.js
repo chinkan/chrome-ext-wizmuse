@@ -18,6 +18,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    chrome.storage.sync.get(['isFirstInstall'], function (result) {
+        if (result.isFirstInstall === undefined) {
+            // 這是首次安裝
+            chrome.storage.sync.set(
+                { isFirstInstall: false, llmProvider: 'openai', llmConfig: {} },
+                function () {
+                    console.log('已設置首次安裝標誌和默認值');
+                }
+            );
+            // 可以在這裡添加一些歡迎信息或指導
+            alert(
+                '歡迎使用 Website Summarizer！請先設置您的 LLM 提供商和 API 密鑰。'
+            );
+        }
+    });
+
     providerSelect.addEventListener('change', function () {
         const selectedProvider = this.value;
         ollamaNotification.style.display =

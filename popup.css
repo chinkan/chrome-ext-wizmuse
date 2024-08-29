@@ -6,7 +6,7 @@ body {
     color: #202124;
 }
 
-#sidebar {
+#popup {
     width: 350px;
     padding: 16px;
     box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3),
@@ -30,22 +30,6 @@ h3 {
     color: #202124;
 }
 
-#read-button {
-    background-color: #1a73e8;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#read-button:hover {
-    background-color: #1765cc;
-}
-
 #summary-container {
     margin-bottom: 16px;
 }
@@ -55,49 +39,6 @@ h3 {
     color: #5f6368;
     margin-bottom: 12px;
     line-height: 20px;
-}
-
-#featured-points {
-    padding-left: 20px;
-    margin-top: 0;
-    margin-bottom: 12px;
-}
-
-#featured-points li {
-    font-size: 14px;
-    color: #5f6368;
-    margin-bottom: 8px;
-    line-height: 20px;
-}
-
-#share-buttons {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 16px;
-    gap: 8px;
-}
-
-#share-buttons button,
-#add-to-notion {
-    background-color: #f1f3f4;
-    color: #1a73e8;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#share-buttons button:hover,
-#add-to-notion:hover {
-    background-color: #e8eaed;
-}
-
-#add-to-notion {
-    width: 100%;
-    margin-top: 8px;
 }
 
 /* Loading indicator */
@@ -159,25 +100,29 @@ h3 {
     }
 }
 
-#copy-button {
+#toolbar {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-top: 8px;
 }
 
-#copy-summary {
+.toolbar-button {
     background-color: transparent;
     border: none;
     cursor: pointer;
     padding: 4px;
-}
-
-#copy-summary:hover {
-    background-color: #f1f3f4;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#copy-summary .material-icons {
+.toolbar-button:hover {
+    background-color: #f1f3f4;
+}
+
+.toolbar-button .material-icons {
     font-size: 20px;
     color: #5f6368;
 }
@@ -196,22 +141,4 @@ h3 {
     font-family: 'Noto Sans TC', sans-serif;
     font-size: 14px;
     font-weight: 400;
-}
-
-#refresh-summary {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    margin-left: 8px;
-}
-
-#refresh-summary:hover {
-    background-color: #f1f3f4;
-    border-radius: 50%;
-}
-
-#refresh-summary .material-icons {
-    font-size: 20px;
-    color: #5f6368;
 }
