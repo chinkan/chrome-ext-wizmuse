@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Website Summarizer</title>
+        <title>WizMuse</title>
         <link rel="stylesheet" type="text/css" href="popup.css" />
         <link
             href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
@@ -16,17 +16,33 @@
     </head>
     <body>
         <div id="popup">
-            <div id="toolbar">
-                <button class="toolbar-button" id="refresh-summary">
-                    <i class="material-icons">refresh</i>
-                </button>
-                <button class="toolbar-button" id="copy-summary">
-                    <i class="material-icons">content_copy</i>
-                </button>
-                <button class="toolbar-button" id="open-options">
-                    <i class="material-icons">settings</i>
-                </button>
+            <div id="header">
+                <div id="logo">WizMuse</div>
+                <div id="toolbar">
+                    <button
+                        class="toolbar-button"
+                        id="regenerate-summary"
+                        title="Regenerate Summary"
+                    >
+                        <i class="material-icons">refresh</i>
+                    </button>
+                    <button
+                        class="toolbar-button"
+                        id="copy-summary"
+                        title="Copy Summary"
+                    >
+                        <i class="material-icons">content_copy</i>
+                    </button>
+                    <button
+                        class="toolbar-button"
+                        id="open-options"
+                        title="Settings"
+                    >
+                        <i class="material-icons">settings</i>
+                    </button>
+                </div>
             </div>
+            <div id="regenerate-container" style="display: none"></div>
             <div id="loading-indicator" class="loader" style="display: none"
                 >Loading...</div
             >

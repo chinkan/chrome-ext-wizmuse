@@ -1,8 +1,8 @@
 class PromptFactory {
-    static getPrompt(key, text) {
+    static getPrompt(key, text, language) {
         const prompts = {
             summarize: {
-                userPrompt: `Please use Traditional chinese to summarize:
+                userPrompt: `Please use ${language} to summarize:
 
 ${text}`,
                 systemPrompt: `
@@ -32,7 +32,7 @@ Please think carefully step by step when asked to summarize lengthy material, fo
 
 3. If the content does not meet the criteria, provide a high-level summary inline instead of creating a separate artifact.
 
-4. Use Traditional chinese to response, don't miss this rules!`,
+4. Use ${language} to response, don't miss this rules!`,
             },
         };
         return prompts[key] || '';

@@ -1,3 +1,10 @@
+:root {
+    --primary-color: #3b3c3d;
+    --hover-color: #f1f3f4;
+    --text-color: #202124;
+    --border-color: #e0e0e0;
+}
+
 body {
     font-family: 'Roboto', Arial, sans-serif;
     margin: 0;
@@ -116,15 +123,16 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.3s;
 }
 
 .toolbar-button:hover {
-    background-color: #f1f3f4;
+    background-color: var(--hover-color);
 }
 
 .toolbar-button .material-icons {
     font-size: 20px;
-    color: #5f6368;
+    color: var(--primary-color);
 }
 
 .tooltip {
@@ -141,4 +149,77 @@ h3 {
     font-family: 'Noto Sans TC', sans-serif;
     font-size: 14px;
     font-weight: 400;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+#logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+#toolbar {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.toolbar-button:hover {
+    background-color: var(--hover-color);
+}
+
+.toolbar-button .material-icons {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+#regenerate-container {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    display: none;
+}
+
+#model-selector {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+#regenerate-container button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+#regenerate-container button:hover {
+    background-color: var(--primary-color-hover);
 }

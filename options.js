@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementsByTagName('tbody')[0];
     const defaultSelect = document.getElementById('default-llm-config');
     const endpointDisplay = document.getElementById('endpoint-display');
-    const endpointTextarea = document.getElementById('endpoint');
+    const endpointInput = document.getElementById('endpoint');
+    const apiKey = document.getElementById('api-key');
     const modelSelect = document.getElementById('model');
     const saveDefaultButton = document.getElementById('save-default');
     const addConfigBtn = document.getElementById('add-config-btn');
@@ -19,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementById('history-table')
         .getElementsByTagName('tbody')[0];
     const llmProviderGrid = document.getElementById('llm-provider-grid');
+    const languageSelect = document.getElementById('language');
+    const apiKeyContainer = document.getElementById('api-key-container');
 
     let isEditing = false;
     let editingIndex = -1;
@@ -42,15 +45,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 載入保存的設置
     chrome.storage.sync.get(
-        ['llmConfigs', 'selectedLLMIndex'],
+        ['llmConfigs', 'selectedLLMIndex', 'language'],
         function (result) {
             if (result.llmConfigs) {
                 result.llmConfigs.forEach((config, index) =>
                     addConfigToTable(config, index)
                 );
+                if (result.selectedLLMIndex !== undefined) {
+                    const selectedConfig =
+                        result.llmConfigs[result.selectedLLMIndex];
+                    defaultSelect.value = result.selectedLLMIndex;
+                    if (selectedConfig) {
+                        const radioButton = document.querySelector(
+                            `input[name="llm-provider"][value="${selectedConfig.provider}"]`
+                        );
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
+                        // 更新端點顯示和輸入
+                        const endpointUrl =
+                            LLMProviderFactory.getDefaultEndpoint(
+                                selectedConfig.provider
+                            );
+                        endpointDisplay.textContent = endpointUrl;
+                        endpointInput.value =
+                            selectedConfig.endpoint || endpointUrl;
+                    }
+                }
+                if (result.language !== undefined) {
+                    languageSelect.value = result.language;
+                }
+
+                loadModels();
             }
             if (result.selectedLLMIndex) {
                 defaultSelect.value = result.selectedLLMIndex;
+            }
+            if (result.language) {
+                languageSelect.value = result.language;
             }
         }
     );
@@ -66,12 +98,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             name: 'Default OpenAI',
                             provider: 'openai',
                             apiKey: '',
-                            model: 'gpt-3.5-turbo',
-                            endpoint:
-                                'https://api.openai.com/v1/chat/completions',
+                            model: 'gpt-4o',
+                            endpoint: 'https://api.openai.com/v1/',
                         },
                     ],
                     selectedLLMIndex: 0,
+                    language: 'English',
                 },
                 function () {
                     console.log('已設置首次安裝標誌和默認值');
@@ -79,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
             );
             // 可以在這裡添加一些歡迎信息或指導
             alert(
-                '歡迎使用 Website Summarizer！請先設置您的 LLM 提供商和 API 密鑰。'
+                'Welcome to WizMuse! Please set up your LLM provider and API key.'
             );
         }
     });
@@ -90,34 +122,12 @@ document.addEventListener('DOMContentLoaded', function () {
             loadModels();
         }
     });
-
-    // 載入保存的設置時更新單選按鈕
-    chrome.storage.sync.get(
-        ['llmConfigs', 'selectedLLMIndex'],
-        function (result) {
-            if (result.llmConfigs && result.selectedLLMIndex !== undefined) {
-                const selectedConfig =
-                    result.llmConfigs[result.selectedLLMIndex];
-                if (selectedConfig) {
-                    const radioButton = document.querySelector(
-                        `input[name="llm-provider"][value="${selectedConfig.provider}"]`
-                    );
-                    if (radioButton) {
-                        radioButton.checked = true;
-                    }
-                    // 更新端點顯示和輸入
-                    const endpointUrl = LLMProviderFactory.getDefaultEndpoint(
-                        selectedConfig.provider
-                    );
-                    endpointDisplay.textContent = endpointUrl;
-                    endpointTextarea.value =
-                        selectedConfig.endpoint || endpointUrl;
-                }
-            }
-            // 初始載入模型
-            loadModels();
-        }
-    );
+    apiKey.addEventListener('input', function (e) {
+        loadModels();
+    });
+    endpointInput.addEventListener('input', function (e) {
+        loadModels();
+    });
 
     // 更新表單提交邏輯
     form.addEventListener('submit', async function (e) {
@@ -128,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ).value;
         const apiKey = document.getElementById('api-key').value;
         const model = modelSelect.value;
-        const endpoint = endpointTextarea.value;
+        const endpoint = endpointInput.value;
 
         const config = { name, provider, apiKey, model, endpoint };
 
@@ -178,11 +188,15 @@ document.addEventListener('DOMContentLoaded', function () {
         editingIndex = -1;
     });
 
-    // 保存預設配置
+    // Save Config
     saveDefaultButton.addEventListener('click', async function () {
         const defaultConfig = defaultSelect.value;
-        await chrome.storage.sync.set({ selectedLLMIndex: defaultConfig });
-        alert('預設配置已保存');
+        const language = document.getElementById('language').value;
+        await chrome.storage.sync.set({
+            selectedLLMIndex: defaultConfig,
+            language: language,
+        });
+        alert('Config Saved');
     });
 
     async function loadModels() {
@@ -192,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const apiKeyInput = document.getElementById('api-key');
         const endpointUrl = LLMProviderFactory.getDefaultEndpoint(provider);
         endpointDisplay.textContent = endpointUrl;
-        endpointTextarea.value = endpointUrl;
+        endpointInput.value = endpointUrl;
 
         const providerInstance = LLMProviderFactory.getProvider(provider, {
             apiKey: apiKeyInput.value,
@@ -200,16 +214,18 @@ document.addEventListener('DOMContentLoaded', function () {
             endpoint: endpointUrl,
         });
 
-        if (provider === 'Ollama') {
-            endpointTextarea.style.display = 'block';
+        if (provider.toLowerCase() === 'ollama') {
+            endpointInput.style.display = 'block';
             apiKeyInput.style.display = 'none';
             endpointDisplay.style.display = 'none';
             apiKeyInput.removeAttribute('required');
+            apiKeyContainer.style.display = 'none';
         } else {
-            endpointTextarea.style.display = 'none';
+            endpointInput.style.display = 'none';
             apiKeyInput.style.display = 'block';
             endpointDisplay.style.display = 'block';
             apiKeyInput.setAttribute('required', '');
+            apiKeyContainer.style.display = 'block';
         }
 
         try {
@@ -221,8 +237,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 )
                 .join('');
         } catch (error) {
-            console.error('載入模型時出錯:', error);
-            modelSelect.innerHTML = '<option value="">載入模型時出錯</option>';
+            console.error('Error loading models:', error);
+            modelSelect.innerHTML =
+                '<option value="">Error loading models</option>';
         }
     }
 
@@ -234,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>${maskApiKey(config.apiKey)}</td>
             <td>${config.model}</td>
             <td>${config.endpoint}</td>
-            <td><button class="delete-btn">刪除</button></td>
+            <td><button class="delete-btn"><i class="material-icons">delete</i></button></td>
         `;
 
         addToDefaultSelect(config.name, index);
@@ -254,30 +271,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function editConfig(index) {
-        const row = table.rows[index];
-        const config = {
-            name: row.cells[0].textContent,
-            provider: row.cells[1].textContent,
-            apiKey: row.cells[2].textContent,
-            model: row.cells[3].textContent,
-        };
+        chrome.storage.sync.get(['llmConfigs'], function (result) {
+            const row = table.rows[index];
+            const config = result.llmConfigs[index];
 
-        document.getElementById('config-name').value = config.name;
-        const radioButton = document.querySelector(
-            `input[name="llm-provider"][value="${config.provider}"]`
-        );
-        if (radioButton) {
-            radioButton.checked = true;
-        }
-        document.getElementById('api-key').value = config.apiKey;
-        loadModels().then(() => {
-            modelSelect.value = config.model;
+            document.getElementById('config-name').value = config.name;
+            const radioButton = document.querySelector(
+                `input[name="llm-provider"][value="${config.provider}"]`
+            );
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+            document.getElementById('api-key').value = config.apiKey;
+            loadModels().then(() => {
+                modelSelect.value = config.model;
+            });
+
+            optionsContainer.style.display = 'flex';
+            addConfigBtn.style.display = 'none';
+            isEditing = true;
+            editingIndex = index;
         });
-
-        optionsContainer.style.display = 'flex';
-        addConfigBtn.style.display = 'none';
-        isEditing = true;
-        editingIndex = index;
     }
 
     function addToDefaultSelect(name, index) {
@@ -293,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function removeFromDefaultSelect(index) {
         defaultSelect.remove(index);
-        // 更新剩餘選項的索引
+        // Update the remaining options' indices
         for (let i = index; i < defaultSelect.options.length; i++) {
             defaultSelect.options[i].value = i;
         }
@@ -320,14 +334,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function maskApiKey(apiKey) {
-        return (
-            apiKey.substring(0, 4) +
-            '*'.repeat(apiKey.length - 8) +
-            apiKey.substring(apiKey.length - 4)
-        );
+        return apiKey === ''
+            ? ''
+            : apiKey.substring(0, 4) +
+                  '*'.repeat(apiKey.length - 8) +
+                  apiKey.substring(apiKey.length - 4);
     }
 
     function loadSummaryHistory() {
+        historyTable.innerHTML = '';
         chrome.storage.local.get(null, function (items) {
             for (let key in items) {
                 if (key.startsWith('http')) {
@@ -337,7 +352,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>${key}</td>
                         <td>${data.title}</td>
                         <td>${new Date(data.timestamp).toLocaleString()}</td>
-                        <td>${data.summary.substring(0, 100)}...</td>
+                        <td>
+                            <div class="summary-container">
+                                <span class="summary-text">${
+                                    typeof data?.summary === 'string'
+                                        ? data?.summary?.substring(0, 100)
+                                        : JSON.stringify(data?.summary)
+                                }...</span>
+                                <button class="copy-btn action-btn" data-url="${key}" title="複製摘要">
+                                    <i class="material-icons">content_copy</i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="delete-btn action-btn" data-url="${key}" title="刪除摘要">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </td>
                     `;
                 }
             }
@@ -345,13 +376,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     historyTable.addEventListener('click', function (e) {
+        const row = e.target.closest('tr');
+        const url = row.cells[0].textContent;
         if (e.target.tagName === 'TD') {
-            const row = e.target.closest('tr');
-            const url = row.cells[0].textContent;
             chrome.storage.local.get(url, function (result) {
                 if (result[url]) {
                     alert(result[url].summary);
                 }
+            });
+        } else if (
+            (e.target.tagName === 'I' &&
+                e.target.parentElement.classList.contains('copy-btn')) ||
+            e.target.classList.contains('copy-btn')
+        ) {
+            chrome.storage.local.get(url, function (result) {
+                if (result[url]) {
+                    navigator.clipboard
+                        .writeText(result[url].summary)
+                        .then(() => {
+                            alert('Summary copied to clipboard');
+                        })
+                        .catch((err) => {
+                            console.error('Copy failed:', err);
+                            alert('Copy failed, please copy manually');
+                        });
+                }
+            });
+        } else if (
+            (e.target.tagName === 'I' &&
+                e.target.parentElement.classList.contains('delete-btn')) ||
+            e.target.classList.contains('delete-btn')
+        ) {
+            chrome.storage.local.remove(url, function () {
+                row.remove();
             });
         }
     });

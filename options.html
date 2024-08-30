@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Website Summarizer Options</title>
+        <title>WizMuse Options</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
             rel="stylesheet"
@@ -21,17 +21,21 @@
         </div>
         <div id="content">
             <div id="about-page">
-                <h1>About Website Summarizer</h1>
+                <h1>About WizMuse</h1>
                 <div class="profile-container">
                     <img
                         src="images/profile.jpeg"
-                        alt="個人資料圖片"
+                        alt="Profile Image"
                         class="profile-image"
                     />
                     <div class="profile-info">
                         <p
+                            ><i class="material-icons">info</i> Version：0.1
+                            beta</p
+                        >
+                        <p
                             ><i class="material-icons">person</i>
-                            作者：chinkan.ai</p
+                            Author：chinkan.ai</p
                         >
                         <p
                             ><i class="material-icons">code</i> GitHub：<a
@@ -97,12 +101,12 @@
                 <table id="llm-configs-table">
                     <thead>
                         <tr>
-                            <th>名稱</th>
+                            <th>Name</th>
                             <th>Provider</th>
-                            <th>API 金鑰</th>
-                            <th>模型</th>
-                            <th>API 端點</th>
-                            <th>操作</th>
+                            <th>API Key</th>
+                            <th>Model</th>
+                            <th>API Endpoint</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -110,16 +114,18 @@
                 <div id="options-container" style="display: none">
                     <form id="options-form">
                         <div class="form-group">
-                            <label for="config-name">配置名稱：</label>
+                            <label for="config-name">Config Name：</label>
                             <input
                                 id="config-name"
                                 type="text"
-                                placeholder="配置名稱"
+                                placeholder="Config Name"
                                 required
                             />
                         </div>
                         <div class="form-group">
-                            <label for="llm-provider">選擇 LLM 提供者：</label>
+                            <label for="llm-provider"
+                                >Choose LLM Provider：</label
+                            >
                             <div id="llm-provider-grid">
                                 <label class="provider-option">
                                     <input
@@ -175,8 +181,8 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="api-key">API 金鑰：</label>
+                        <div class="form-group" id="api-key-container">
+                            <label for="api-key">API Key：</label>
                             <input
                                 type="text"
                                 id="api-key"
@@ -185,39 +191,44 @@
                             />
                         </div>
                         <div class="form-group">
-                            <label for="model">模型：</label>
+                            <label for="model">Model：</label>
                             <select id="model" name="model" required></select>
                         </div>
                         <div class="form-group">
-                            <label for="endpoint-display">API 端點：</label>
+                            <label for="endpoint-display">API Endpoint：</label>
                             <div
                                 id="endpoint-display"
                                 class="endpoint-display"
                             ></div>
-                            <textarea
+                            <input
+                                type="text"
                                 id="endpoint"
-                                placeholder="API 端點"
+                                placeholder="API Endpoint"
                                 style="display: none"
-                            ></textarea>
+                            ></input>
                         </div>
                         <div class="form-group button-group">
                             <button type="submit" class="primary-button"
-                                >保存</button
+                                >Save</button
                             >
                             <button
                                 type="button"
                                 id="cancel-form"
                                 class="secondary-button"
-                                >取消</button
+                                >Cancel</button
                             >
                         </div>
                     </form>
                 </div>
                 <div class="form-group">
-                    <label for="default-llm-config">預設 LLM 配置：</label>
+                    <label for="language">Language：</label>
+                    <input type="text" id="language" />
+                </div>
+                <div class="form-group">
+                    <label for="default-llm-config">Default LLM Config：</label>
                     <select id="default-llm-config"></select>
                 </div>
-                <button id="save-default">保存預設配置</button>
+                <button id="save-default">Save Config</button>
             </div>
             <div id="history-page" style="display: none">
                 <h1>Summary History</h1>
@@ -228,6 +239,7 @@
                             <th>Title</th>
                             <th>Summarized Time</th>
                             <th>Summary</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>

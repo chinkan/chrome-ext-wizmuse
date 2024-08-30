@@ -5,27 +5,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
     if (request.action === 'summarize') {
         chrome.storage.sync.get(
-            ['llmConfigs', 'selectedLLMIndex'],
+            ['llmConfigs', 'selectedLLMIndex', 'language'],
             async (result) => {
                 try {
-                    console.error(JSON.stringify(result));
+                    if (
+                        !result.llmConfigs ||
+                        !result.selectedLLMIndex ||
+                        !result.language
+                    ) {
+                        throw new Error(
+                            'You have not set up your LLM provider and API key. Please go to the options page to set up your LLM provider and API key.'
+                        );
+                    }
                     const defaultConfig =
                         result.llmConfigs[result.selectedLLMIndex];
-                    console.error(JSON.stringify(defaultConfig));
                     const provider = LLMProviderFactory.getProvider(
                         defaultConfig.provider,
                         defaultConfig
                     );
                     const prompts = PromptFactory.getPrompt(
                         'summarize',
-                        request.text
+                        request.text,
+                        result.language
                     );
                     const summary = await provider.summarize(
                         prompts.userPrompt,
                         prompts.systemPrompt
                     );
                     if (summary && typeof summary.summary === 'string') {
-                        sendResponse({ summary });
+                        handleResponse(summary, sendResponse);
                     } else {
                         throw new Error(
                             'Invalid summary format received from provider'
@@ -33,9 +41,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                 } catch (error) {
                     console.error('Error in background script:', error);
-                    sendResponse({
-                        error: error.message || 'An unknown error occurred',
-                    });
+                    handleError(error, sendResponse);
                 }
             }
         );
@@ -48,3 +54,14 @@ chrome.runtime.onInstalled.addListener(function (details) {
         chrome.runtime.openOptionsPage();
     }
 });
+
+function handleResponse(summary, sendResponse) {
+    sendResponse({ summary: summary.summary });
+}
+
+function handleError(error, sendResponse) {
+    console.error('Error in background script:', error);
+    sendResponse({
+        error: error.message || 'An unknown error occurred',
+    });
+}
