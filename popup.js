@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function generateSummary(url, title) {
-        loadingIndicator.style.display = 'block';
+        loadingIndicator.style.display = 'flex';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
 
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function handleError(message) {
         console.error('Error:', message);
         errorMessage.textContent = message;
-        errorMessage.style.display = 'block';
+        errorMessage.style.display = 'flex';
         loadingIndicator.style.display = 'none';
     }
 
@@ -162,6 +162,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementById('regenerate-summary')
         .addEventListener('click', function () {
             showModelSelector(function (selectedModelIndex) {
+                loadingIndicator.style.display = 'flex';
+                errorMessage.style.display = 'none';
+                summaryContainer.style.display = 'none';
                 chrome.tabs.query(
                     { active: true, currentWindow: true },
                     function (tabs) {

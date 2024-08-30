@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementsByTagName('tbody')[0];
     const defaultSelect = document.getElementById('default-llm-config');
     const endpointDisplay = document.getElementById('endpoint-display');
-    const endpointTextarea = document.getElementById('endpoint');
+    const endpointInput = document.getElementById('endpoint');
     const apiKey = document.getElementById('api-key');
     const modelSelect = document.getElementById('model');
     const saveDefaultButton = document.getElementById('save-default');
@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementsByTagName('tbody')[0];
     const llmProviderGrid = document.getElementById('llm-provider-grid');
     const languageSelect = document.getElementById('language');
+    const apiKeyContainer = document.getElementById('api-key-container');
 
     let isEditing = false;
     let editingIndex = -1;
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 selectedConfig.provider
                             );
                         endpointDisplay.textContent = endpointUrl;
-                        endpointTextarea.value =
+                        endpointInput.value =
                             selectedConfig.endpoint || endpointUrl;
                     }
                 }
@@ -124,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
     apiKey.addEventListener('input', function (e) {
         loadModels();
     });
+    endpointInput.addEventListener('input', function (e) {
+        loadModels();
+    });
 
     // 更新表單提交邏輯
     form.addEventListener('submit', async function (e) {
@@ -134,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ).value;
         const apiKey = document.getElementById('api-key').value;
         const model = modelSelect.value;
-        const endpoint = endpointTextarea.value;
+        const endpoint = endpointInput.value;
 
         const config = { name, provider, apiKey, model, endpoint };
 
@@ -202,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const apiKeyInput = document.getElementById('api-key');
         const endpointUrl = LLMProviderFactory.getDefaultEndpoint(provider);
         endpointDisplay.textContent = endpointUrl;
-        endpointTextarea.value = endpointUrl;
+        endpointInput.value = endpointUrl;
 
         const providerInstance = LLMProviderFactory.getProvider(provider, {
             apiKey: apiKeyInput.value,
@@ -210,16 +214,18 @@ document.addEventListener('DOMContentLoaded', function () {
             endpoint: endpointUrl,
         });
 
-        if (provider === 'Ollama') {
-            endpointTextarea.style.display = 'block';
+        if (provider.toLowerCase() === 'ollama') {
+            endpointInput.style.display = 'block';
             apiKeyInput.style.display = 'none';
             endpointDisplay.style.display = 'none';
             apiKeyInput.removeAttribute('required');
+            apiKeyContainer.style.display = 'none';
         } else {
-            endpointTextarea.style.display = 'none';
+            endpointInput.style.display = 'none';
             apiKeyInput.style.display = 'block';
             endpointDisplay.style.display = 'block';
             apiKeyInput.setAttribute('required', '');
+            apiKeyContainer.style.display = 'block';
         }
 
         try {
