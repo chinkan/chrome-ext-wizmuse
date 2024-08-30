@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Website Summarizer",
+    "name": "WizMuse",
     "version": "0.1",
-    "description": "Summarize websites using various LLM providers",
+    "description": "WizMuse is a powerful web page summarization tool. Quickly extract core content from web pages to improve reading efficiency.",
     "permissions": ["activeTab", "storage", "scripting"],
     "action": {
         "default_popup": "popup.html",

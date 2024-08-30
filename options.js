@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .getElementById('history-table')
         .getElementsByTagName('tbody')[0];
     const llmProviderGrid = document.getElementById('llm-provider-grid');
+    const languageSelect = document.getElementById('language');
 
     let isEditing = false;
     let editingIndex = -1;
@@ -43,15 +44,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 載入保存的設置
     chrome.storage.sync.get(
-        ['llmConfigs', 'selectedLLMIndex'],
+        ['llmConfigs', 'selectedLLMIndex', 'language'],
         function (result) {
             if (result.llmConfigs) {
                 result.llmConfigs.forEach((config, index) =>
                     addConfigToTable(config, index)
                 );
+                if (result.selectedLLMIndex !== undefined) {
+                    const selectedConfig =
+                        result.llmConfigs[result.selectedLLMIndex];
+                    defaultSelect.value = result.selectedLLMIndex;
+                    if (selectedConfig) {
+                        const radioButton = document.querySelector(
+                            `input[name="llm-provider"][value="${selectedConfig.provider}"]`
+                        );
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
+                        // 更新端點顯示和輸入
+                        const endpointUrl =
+                            LLMProviderFactory.getDefaultEndpoint(
+                                selectedConfig.provider
+                            );
+                        endpointDisplay.textContent = endpointUrl;
+                        endpointTextarea.value =
+                            selectedConfig.endpoint || endpointUrl;
+                    }
+                }
+                if (result.language !== undefined) {
+                    languageSelect.value = result.language;
+                }
+
+                loadModels();
             }
             if (result.selectedLLMIndex) {
                 defaultSelect.value = result.selectedLLMIndex;
+            }
+            if (result.language) {
+                languageSelect.value = result.language;
             }
         }
     );
@@ -67,12 +97,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             name: 'Default OpenAI',
                             provider: 'openai',
                             apiKey: '',
-                            model: 'gpt-3.5-turbo',
-                            endpoint:
-                                'https://api.openai.com/v1/chat/completions',
+                            model: 'gpt-4o',
+                            endpoint: 'https://api.openai.com/v1/',
                         },
                     ],
                     selectedLLMIndex: 0,
+                    language: 'English',
                 },
                 function () {
                     console.log('已設置首次安裝標誌和默認值');
@@ -80,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
             );
             // 可以在這裡添加一些歡迎信息或指導
             alert(
-                '歡迎使用 Website Summarizer！請先設置您的 LLM 提供商和 API 密鑰。'
+                'Welcome to WizMuse! Please set up your LLM provider and API key.'
             );
         }
     });
@@ -94,34 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
     apiKey.addEventListener('input', function (e) {
         loadModels();
     });
-
-    // 載入保存的設置時更新單選按鈕
-    chrome.storage.sync.get(
-        ['llmConfigs', 'selectedLLMIndex'],
-        function (result) {
-            if (result.llmConfigs && result.selectedLLMIndex !== undefined) {
-                const selectedConfig =
-                    result.llmConfigs[result.selectedLLMIndex];
-                if (selectedConfig) {
-                    const radioButton = document.querySelector(
-                        `input[name="llm-provider"][value="${selectedConfig.provider}"]`
-                    );
-                    if (radioButton) {
-                        radioButton.checked = true;
-                    }
-                    // 更新端點顯示和輸入
-                    const endpointUrl = LLMProviderFactory.getDefaultEndpoint(
-                        selectedConfig.provider
-                    );
-                    endpointDisplay.textContent = endpointUrl;
-                    endpointTextarea.value =
-                        selectedConfig.endpoint || endpointUrl;
-                }
-            }
-            // 初始載入模型
-            loadModels();
-        }
-    );
 
     // 更新表單提交邏輯
     form.addEventListener('submit', async function (e) {
@@ -182,11 +184,15 @@ document.addEventListener('DOMContentLoaded', function () {
         editingIndex = -1;
     });
 
-    // 保存預設配置
+    // Save Config
     saveDefaultButton.addEventListener('click', async function () {
         const defaultConfig = defaultSelect.value;
-        await chrome.storage.sync.set({ selectedLLMIndex: defaultConfig });
-        alert('預設配置已保存');
+        const language = document.getElementById('language').value;
+        await chrome.storage.sync.set({
+            selectedLLMIndex: defaultConfig,
+            language: language,
+        });
+        alert('Config Saved');
     });
 
     async function loadModels() {
@@ -225,8 +231,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 )
                 .join('');
         } catch (error) {
-            console.error('載入模型時出錯:', error);
-            modelSelect.innerHTML = '<option value="">載入模型時出錯</option>';
+            console.error('Error loading models:', error);
+            modelSelect.innerHTML =
+                '<option value="">Error loading models</option>';
         }
     }
 
@@ -238,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>${maskApiKey(config.apiKey)}</td>
             <td>${config.model}</td>
             <td>${config.endpoint}</td>
-            <td><button class="delete-btn">刪除</button></td>
+            <td><button class="delete-btn"><i class="material-icons">delete</i></button></td>
         `;
 
         addToDefaultSelect(config.name, index);
@@ -258,30 +265,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function editConfig(index) {
-        const row = table.rows[index];
-        const config = {
-            name: row.cells[0].textContent,
-            provider: row.cells[1].textContent,
-            apiKey: row.cells[2].textContent,
-            model: row.cells[3].textContent,
-        };
+        chrome.storage.sync.get(['llmConfigs'], function (result) {
+            const row = table.rows[index];
+            const config = result.llmConfigs[index];
 
-        document.getElementById('config-name').value = config.name;
-        const radioButton = document.querySelector(
-            `input[name="llm-provider"][value="${config.provider}"]`
-        );
-        if (radioButton) {
-            radioButton.checked = true;
-        }
-        document.getElementById('api-key').value = config.apiKey;
-        loadModels().then(() => {
-            modelSelect.value = config.model;
+            document.getElementById('config-name').value = config.name;
+            const radioButton = document.querySelector(
+                `input[name="llm-provider"][value="${config.provider}"]`
+            );
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+            document.getElementById('api-key').value = config.apiKey;
+            loadModels().then(() => {
+                modelSelect.value = config.model;
+            });
+
+            optionsContainer.style.display = 'flex';
+            addConfigBtn.style.display = 'none';
+            isEditing = true;
+            editingIndex = index;
         });
-
-        optionsContainer.style.display = 'flex';
-        addConfigBtn.style.display = 'none';
-        isEditing = true;
-        editingIndex = index;
     }
 
     function addToDefaultSelect(name, index) {
@@ -297,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function removeFromDefaultSelect(index) {
         defaultSelect.remove(index);
-        // 更新剩餘選項的索引
+        // Update the remaining options' indices
         for (let i = index; i < defaultSelect.options.length; i++) {
             defaultSelect.options[i].value = i;
         }
@@ -384,11 +388,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     navigator.clipboard
                         .writeText(result[url].summary)
                         .then(() => {
-                            alert('摘要已複製到剪貼板');
+                            alert('Summary copied to clipboard');
                         })
                         .catch((err) => {
-                            console.error('複製失敗：', err);
-                            alert('複製失敗，請手動複製');
+                            console.error('Copy failed:', err);
+                            alert('Copy failed, please copy manually');
                         });
                 }
             });

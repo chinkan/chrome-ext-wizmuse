@@ -1,3 +1,10 @@
+:root {
+    --primary-color: #3b3c3d;
+    --hover-color: #f1f3f4;
+    --text-color: #202124;
+    --border-color: #e0e0e0;
+}
+
 body {
     font-family: 'Roboto', Arial, sans-serif;
     margin: 0;
@@ -116,15 +123,16 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.3s;
 }
 
 .toolbar-button:hover {
-    background-color: #f1f3f4;
+    background-color: var(--hover-color);
 }
 
 .toolbar-button .material-icons {
     font-size: 20px;
-    color: #5f6368;
+    color: var(--primary-color);
 }
 
 .tooltip {
@@ -141,4 +149,43 @@ h3 {
     font-family: 'Noto Sans TC', sans-serif;
     font-size: 14px;
     font-weight: 400;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+#logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+#toolbar {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.toolbar-button:hover {
+    background-color: var(--hover-color);
+}
+
+.toolbar-button .material-icons {
+    font-size: 20px;
+    color: var(--primary-color);
 }

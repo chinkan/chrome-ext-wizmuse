@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const currentTitle = tabs[0].title;
         chrome.storage.local.get([currentUrl], function (result) {
             if (result[currentUrl]) {
-                displaySummary(result[currentUrl]);
+                displaySummary(result[currentUrl].summary);
             } else {
                 generateSummary(currentUrl, currentTitle);
             }
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleError(message) {
         console.error('Error:', message);
-        errorMessage.textContent = 'Error: ' + message;
+        errorMessage.textContent = message;
         errorMessage.style.display = 'block';
         loadingIndicator.style.display = 'none';
     }
@@ -94,12 +94,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const summaryContent = document.getElementById('summary').innerText;
         navigator.clipboard.writeText(summaryContent).then(
             function () {
-                console.log('摘要已成功複製到剪貼板');
-                showTooltip('已複製到剪貼板');
+                console.log('Summary copied to clipboard');
+                showTooltip('Copied to clipboard');
             },
             function (err) {
-                console.error('無法複製摘要: ', err);
-                showTooltip('複製失敗');
+                console.error('Copy failed: ', err);
+                showTooltip('Copy failed');
             }
         );
     }
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tooltip.className = 'tooltip';
         document.body.appendChild(tooltip);
 
-        // 強制瀏覽器重新計算樣式
+        // Force browser to recalculate styles
         tooltip.offsetHeight;
 
         setTimeout(() => {
@@ -119,20 +119,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.body.removeChild(tooltip);
             }, 500);
         }, 2000);
-    }
-
-    document
-        .getElementById('refresh-summary')
-        .addEventListener('click', refreshSummary);
-
-    function refreshSummary() {
-        chrome.tabs.query(
-            { active: true, currentWindow: true },
-            function (tabs) {
-                const currentUrl = tabs[0].url;
-                generateSummary(currentUrl);
-            }
-        );
     }
 
     document
@@ -160,12 +146,14 @@ document.addEventListener('DOMContentLoaded', function () {
             );
             regenerateContainer.innerHTML = '';
             regenerateContainer.appendChild(modelSelector);
+            regenerateContainer.style.display = 'block';
 
             const confirmButton = document.createElement('button');
-            confirmButton.textContent = '確認';
-            confirmButton.addEventListener('click', () =>
-                callback(modelSelector.value)
-            );
+            confirmButton.textContent = 'Confirm';
+            confirmButton.addEventListener('click', () => {
+                callback(modelSelector.value);
+                regenerateContainer.style.display = 'none';
+            });
             regenerateContainer.appendChild(confirmButton);
         });
     }
