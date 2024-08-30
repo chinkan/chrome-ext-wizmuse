@@ -25,7 +25,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         prompts.systemPrompt
                     );
                     if (summary && typeof summary.summary === 'string') {
-                        sendResponse({ summary });
+                        sendResponse({ summary: summary.summary });
                     } else {
                         throw new Error(
                             'Invalid summary format received from provider'

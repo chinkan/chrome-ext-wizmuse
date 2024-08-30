@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const defaultSelect = document.getElementById('default-llm-config');
     const endpointDisplay = document.getElementById('endpoint-display');
     const endpointTextarea = document.getElementById('endpoint');
+    const apiKey = document.getElementById('api-key');
     const modelSelect = document.getElementById('model');
     const saveDefaultButton = document.getElementById('save-default');
     const addConfigBtn = document.getElementById('add-config-btn');
@@ -89,6 +90,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.type === 'radio') {
             loadModels();
         }
+    });
+    apiKey.addEventListener('input', function (e) {
+        loadModels();
     });
 
     // 載入保存的設置時更新單選按鈕
@@ -320,14 +324,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function maskApiKey(apiKey) {
-        return (
-            apiKey.substring(0, 4) +
-            '*'.repeat(apiKey.length - 8) +
-            apiKey.substring(apiKey.length - 4)
-        );
+        return apiKey === ''
+            ? ''
+            : apiKey.substring(0, 4) +
+                  '*'.repeat(apiKey.length - 8) +
+                  apiKey.substring(apiKey.length - 4);
     }
 
     function loadSummaryHistory() {
+        historyTable.innerHTML = '';
         chrome.storage.local.get(null, function (items) {
             for (let key in items) {
                 if (key.startsWith('http')) {
@@ -337,7 +342,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>${key}</td>
                         <td>${data.title}</td>
                         <td>${new Date(data.timestamp).toLocaleString()}</td>
-                        <td>${data.summary.substring(0, 100)}...</td>
+                        <td>
+                            <div class="summary-container">
+                                <span class="summary-text">${
+                                    typeof data?.summary === 'string'
+                                        ? data?.summary?.substring(0, 100)
+                                        : JSON.stringify(data?.summary)
+                                }...</span>
+                                <button class="copy-btn action-btn" data-url="${key}" title="複製摘要">
+                                    <i class="material-icons">content_copy</i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="delete-btn action-btn" data-url="${key}" title="刪除摘要">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </td>
                     `;
                 }
             }
@@ -345,13 +366,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     historyTable.addEventListener('click', function (e) {
+        const row = e.target.closest('tr');
+        const url = row.cells[0].textContent;
         if (e.target.tagName === 'TD') {
-            const row = e.target.closest('tr');
-            const url = row.cells[0].textContent;
             chrome.storage.local.get(url, function (result) {
                 if (result[url]) {
                     alert(result[url].summary);
                 }
+            });
+        } else if (
+            (e.target.tagName === 'I' &&
+                e.target.parentElement.classList.contains('copy-btn')) ||
+            e.target.classList.contains('copy-btn')
+        ) {
+            chrome.storage.local.get(url, function (result) {
+                if (result[url]) {
+                    navigator.clipboard
+                        .writeText(result[url].summary)
+                        .then(() => {
+                            alert('摘要已複製到剪貼板');
+                        })
+                        .catch((err) => {
+                            console.error('複製失敗：', err);
+                            alert('複製失敗，請手動複製');
+                        });
+                }
+            });
+        } else if (
+            (e.target.tagName === 'I' &&
+                e.target.parentElement.classList.contains('delete-btn')) ||
+            e.target.classList.contains('delete-btn')
+        ) {
+            chrome.storage.local.remove(url, function () {
+                row.remove();
             });
         }
     });

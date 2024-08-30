@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function displaySummary(summary) {
-        const markdownHtml = markdown(summary.summary);
+        const markdownHtml = markdown(summary);
         document.getElementById('summary').innerHTML = markdownHtml;
         summaryContainer.style.display = 'block';
         loadingIndicator.style.display = 'none';
@@ -222,7 +222,4 @@ document.addEventListener('DOMContentLoaded', function () {
                 );
             });
         });
-
-    // 在生成摘要後調用此函數
-    showModelSelector();
 });
