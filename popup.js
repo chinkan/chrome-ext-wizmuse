@@ -1,78 +1,103 @@
-document.addEventListener('DOMContentLoaded', function () {
+import { getStorageData, setStorageData } from './utils/storage.js';
+
+document.addEventListener('DOMContentLoaded', async function () {
     const loadingIndicator = document.getElementById('loading-indicator');
     const errorMessage = document.getElementById('error-message');
     const summaryContainer = document.getElementById('summary-container');
 
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        const currentUrl = tabs[0].url;
-        const currentTitle = tabs[0].title;
-        chrome.storage.local.get([currentUrl], function (result) {
-            if (result[currentUrl]) {
-                displaySummary(result[currentUrl].summary);
-            } else {
-                generateSummary(currentUrl, currentTitle);
-            }
+    try {
+        const tabs = await new Promise((resolve) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, resolve);
         });
-    });
+        const currentUrl = tabs[0].url;
+        const result = await getStorageData(currentUrl);
+        if (result[currentUrl]) {
+            displaySummary(result[currentUrl].summary);
+        } else {
+            await generateSummary();
+        }
+    } catch (error) {
+        handleError(error.message);
+    }
 
-    function generateSummary(url, title) {
+    async function generateSummary(selectedIndex = null) {
         loadingIndicator.style.display = 'flex';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
 
-        chrome.tabs.query(
-            { active: true, currentWindow: true },
-            function (tabs) {
+        try {
+            const tabs = await new Promise((resolve) => {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    resolve
+                );
+            });
+
+            const currentTab = tabs[0];
+            const currentUrl = currentTab.url;
+            const currentTitle = currentTab.title;
+
+            const response = await new Promise((resolve, reject) => {
                 chrome.tabs.sendMessage(
-                    tabs[0].id,
+                    currentTab.id,
                     { action: 'getPageContent' },
-                    function (response) {
+                    (response) => {
                         if (chrome.runtime.lastError) {
-                            handleError(chrome.runtime.lastError.message);
-                            return;
-                        }
-                        if (response && response.content) {
-                            chrome.runtime.sendMessage(
-                                { action: 'summarize', text: response.content },
-                                function (response) {
-                                    if (chrome.runtime.lastError) {
-                                        handleError(
-                                            chrome.runtime.lastError.message
-                                        );
-                                    } else if (response && response.error) {
-                                        handleError(response.error);
-                                    } else if (response && response.summary) {
-                                        chrome.storage.local.set(
-                                            {
-                                                [url]: {
-                                                    summary: response.summary,
-                                                    title: title,
-                                                    timestamp: Date.now(),
-                                                },
-                                            },
-                                            function () {
-                                                displaySummary(
-                                                    response.summary
-                                                );
-                                            }
-                                        );
-                                    } else {
-                                        handleError(
-                                            'Invalid summarization response'
-                                        );
-                                    }
-                                }
-                            );
+                            reject(new Error(chrome.runtime.lastError.message));
                         } else {
-                            handleError('Invalid response');
+                            resolve(response);
                         }
                     }
                 );
+            });
+
+            if (response && response.content) {
+                await _summarize(
+                    currentUrl,
+                    currentTitle,
+                    response.content,
+                    selectedIndex
+                );
+            } else {
+                throw new Error('Invalid response');
             }
-        );
+        } catch (error) {
+            handleError(error.message);
+        }
+    }
+
+    async function _summarize(url, title, content, selectedIndex) {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'summarize',
+                text: content,
+                selectedIndex: selectedIndex,
+            });
+
+            console.log('response2', response);
+
+            if (response && response.error) {
+                handleError(response.error);
+            } else if (response && response.summary) {
+                await setStorageData({
+                    [url]: {
+                        summary: response.summary,
+                        title: title,
+                        timestamp: Date.now(),
+                    },
+                });
+                displaySummary(response.summary);
+            } else {
+                handleError('Invalid summarization response');
+            }
+        } catch (error) {
+            console.error('Runtime error:', error);
+            handleError(error.message || 'An unknown error occurred');
+        }
     }
 
     function displaySummary(summary) {
+        console.log('displaySummary', summary);
         const markdownHtml = markdown(summary);
         document.getElementById('summary').innerHTML = markdownHtml;
         summaryContainer.style.display = 'block';
@@ -131,86 +156,86 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-    function showModelSelector(callback) {
-        chrome.storage.sync.get(['llmConfigs'], function (result) {
-            const modelSelector = document.createElement('select');
-            modelSelector.id = 'model-selector';
-            result.llmConfigs.forEach((config, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${config.provider} - ${config.model}`;
-                modelSelector.appendChild(option);
-            });
+    async function showModelSelector(callback) {
+        try {
+            const result = await getStorageData('llmConfigs');
+            console.log('showModelSelector result', result);
+
             const regenerateContainer = document.getElementById(
                 'regenerate-container'
             );
             regenerateContainer.innerHTML = '';
-            regenerateContainer.appendChild(modelSelector);
-            regenerateContainer.style.display = 'block';
+
+            // 創建自定義下拉選單
+            const customSelect = document.createElement('div');
+            customSelect.className = 'custom-select';
+
+            const selectedOption = document.createElement('div');
+            selectedOption.className = 'selected-option';
+            selectedOption.textContent = 'Select a model';
+            customSelect.appendChild(selectedOption);
+
+            const optionsList = document.createElement('div');
+            optionsList.className = 'options-list';
+            optionsList.style.display = 'none';
+
+            result.llmConfigs.forEach((config, index) => {
+                const option = document.createElement('div');
+                option.className = 'option';
+                option.dataset.value = index;
+                option.textContent = `${config.name} (${config.provider} - ${config.model})`;
+                option.addEventListener('click', () => {
+                    optionsList
+                        .querySelectorAll('.option')
+                        .forEach((opt) => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedOption.textContent = option.textContent;
+                    optionsList.style.display = 'none';
+                    confirmButton.disabled = false;
+                });
+                optionsList.appendChild(option);
+            });
+
+            customSelect.appendChild(optionsList);
+            regenerateContainer.appendChild(customSelect);
+
+            selectedOption.addEventListener('click', () => {
+                optionsList.style.display =
+                    optionsList.style.display === 'none' ? 'block' : 'none';
+            });
 
             const confirmButton = document.createElement('button');
             confirmButton.textContent = 'Confirm';
-            confirmButton.addEventListener('click', () => {
-                callback(modelSelector.value);
-                regenerateContainer.style.display = 'none';
+            confirmButton.disabled = true;
+            confirmButton.addEventListener('click', async () => {
+                const selectedOption =
+                    optionsList.querySelector('.option.selected');
+                if (selectedOption) {
+                    const selectedIndex = selectedOption.dataset.value;
+                    await callback(selectedIndex);
+                    regenerateContainer.style.display = 'none';
+                }
             });
             regenerateContainer.appendChild(confirmButton);
-        });
+
+            regenerateContainer.style.display = 'block';
+        } catch (error) {
+            handleError(error.message);
+        }
     }
 
     document
         .getElementById('regenerate-summary')
-        .addEventListener('click', function () {
-            showModelSelector(function (selectedModelIndex) {
+        .addEventListener('click', async function () {
+            showModelSelector(async function (selectedModelIndex) {
                 loadingIndicator.style.display = 'flex';
                 errorMessage.style.display = 'none';
                 summaryContainer.style.display = 'none';
-                chrome.tabs.query(
-                    { active: true, currentWindow: true },
-                    function (tabs) {
-                        chrome.tabs.sendMessage(
-                            tabs[0].id,
-                            { action: 'getPageContent' },
-                            function (response) {
-                                if (response && response.content) {
-                                    chrome.storage.sync.get(
-                                        ['llmConfigs'],
-                                        function (result) {
-                                            const selectedConfig =
-                                                result.llmConfigs[
-                                                    selectedModelIndex
-                                                ];
-                                            chrome.runtime.sendMessage(
-                                                {
-                                                    action: 'summarize',
-                                                    text: response.content,
-                                                    config: selectedConfig,
-                                                },
-                                                function (response) {
-                                                    if (
-                                                        response &&
-                                                        response.summary
-                                                    ) {
-                                                        displaySummary(
-                                                            response.summary
-                                                        );
-                                                    } else if (
-                                                        response &&
-                                                        response.error
-                                                    ) {
-                                                        handleError(
-                                                            response.error
-                                                        );
-                                                    }
-                                                }
-                                            );
-                                        }
-                                    );
-                                }
-                            }
-                        );
-                    }
-                );
+                try {
+                    await generateSummary(selectedModelIndex);
+                } catch (error) {
+                    handleError(error.message);
+                }
             });
         });
 });
