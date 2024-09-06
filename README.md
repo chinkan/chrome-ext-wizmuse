@@ -8,11 +8,11 @@ WizMuse is a browser extension that allows users to summarize web pages using va
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/chinkan/chrome-ext-website-summarizer.git
+    git clone https://github.com/chinkan/chrome-ext-wizmuse.git
     ```
 2. Change directory to the project folder:
     ```bash
-    cd chrome-ext-website-summarizer
+    cd chrome-ext-wizmuse
     ```
 3. Clone the drawdown repository into the `lib` directory:
     ```bash
