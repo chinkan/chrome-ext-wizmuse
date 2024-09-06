@@ -223,3 +223,36 @@ h3 {
 #regenerate-container button:hover {
     background-color: var(--primary-color-hover);
 }
+
+.custom-select {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.selected-option {
+    padding: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.options-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.option:hover {
+    background-color: #f0f0f0;
+}
