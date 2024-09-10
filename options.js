@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkFirstInstall(function () {
         loadConfigs();
+        loadPrompts();
     });
 
     function checkFirstInstall(callback) {
@@ -446,4 +447,131 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     loadSummaryHistory();
+
+    const promptsTable = document
+        .getElementById('prompts-table')
+        .getElementsByTagName('tbody')[0];
+    const defaultPromptSelect = document.getElementById('default-prompt');
+    const addPromptBtn = document.getElementById('add-prompt-btn');
+    const promptFormContainer = document.getElementById(
+        'prompt-form-container'
+    );
+    const promptForm = document.getElementById('prompt-form');
+    const cancelPromptFormBtn = document.getElementById('cancel-prompt-form');
+
+    function loadPrompts() {
+        getStorageData(['prompts', 'defaultPromptIndex']).then((result) => {
+            if (result.prompts) {
+                promptsTable.innerHTML = ''; // 清空表格
+                result.prompts.forEach((prompt, index) =>
+                    addPromptToTable(prompt, index)
+                );
+
+                // 更新默認提示選擇
+                updateDefaultPromptSelect(
+                    result.prompts,
+                    result.defaultPromptIndex
+                );
+            }
+        });
+    }
+
+    function addPromptToTable(prompt, index) {
+        const row = promptsTable.insertRow();
+        row.innerHTML = `
+            <td>${prompt.name}</td>
+            <td>${truncateText(prompt.content, 50)}</td>
+            <td>
+                <button class="edit-btn action-btn" data-index="${index}" title="Edit Prompt">
+                    <i class="material-icons">edit</i>
+                </button>
+                <button class="delete-btn action-btn" data-index="${index}" title="Delete Prompt">
+                    <i class="material-icons">delete</i>
+                </button>
+            </td>
+        `;
+    }
+
+    function updateDefaultPromptSelect(prompts, defaultIndex) {
+        defaultPromptSelect.innerHTML = prompts
+            .map(
+                (prompt, index) =>
+                    `<option value="${index}" ${
+                        index === defaultIndex ? 'selected' : ''
+                    }>${prompt.name}</option>`
+            )
+            .join('');
+    }
+
+    function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text;
+        return text.substr(0, maxLength) + '...';
+    }
+
+    // 處理提示表格的點擊事件
+    promptsTable.addEventListener('click', function (e) {
+        if (e.target.closest('.edit-btn')) {
+            const index = e.target.closest('.edit-btn').dataset.index;
+            editPrompt(index);
+        } else if (e.target.closest('.delete-btn')) {
+            const index = e.target.closest('.delete-btn').dataset.index;
+            deletePrompt(index);
+        }
+    });
+
+    function editPrompt(index) {
+        // TODO: 實現編輯提示的邏輯
+        console.log('Edit Prompt', index);
+    }
+
+    function deletePrompt(index) {
+        if (confirm('Are you sure you want to delete this prompt?')) {
+            getStorageData('prompts').then((result) => {
+                let prompts = result.prompts || [];
+                prompts.splice(index, 1);
+                setStorageData({ prompts: prompts }).then(() => {
+                    loadPrompts(); // 重新加載提示列表
+                });
+            });
+        }
+    }
+
+    // 添加新提示按鈕
+    addPromptBtn.addEventListener('click', function () {
+        promptFormContainer.style.display = 'block';
+        promptForm.reset();
+    });
+
+    // 取消添加提示
+    cancelPromptFormBtn.addEventListener('click', function () {
+        promptFormContainer.style.display = 'none';
+    });
+
+    // 保存提示表單
+    promptForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const name = document.getElementById('prompt-name').value;
+        const content = document.getElementById('prompt-content').value;
+
+        getStorageData('prompts').then((result) => {
+            let prompts = result.prompts || [];
+            prompts.push({ name, content });
+            setStorageData({ prompts: prompts }).then(() => {
+                loadPrompts(); // 重新加載提示列表
+                promptFormContainer.style.display = 'none';
+            });
+        });
+    });
+
+    // 保存默認提示
+    document
+        .getElementById('save-default-prompt')
+        .addEventListener('click', function () {
+            const defaultPromptIndex = defaultPromptSelect.value;
+            setStorageData({
+                defaultPromptIndex: parseInt(defaultPromptIndex),
+            }).then(() => {
+                alert('Prompt Saved');
+            });
+        });
 });
