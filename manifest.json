@@ -1,16 +1,23 @@
 {
     "manifest_version": 3,
     "name": "WizMuse",
-    "version": "0.1",
+    "version": "0.2",
     "description": "WizMuse is a powerful web page summarization tool. Quickly extract core content from web pages to improve reading efficiency.",
     "permissions": ["activeTab", "storage"],
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
             "16": "images/icon16.png",
+            "32": "images/icon32.png",
             "48": "images/icon48.png",
             "128": "images/icon128.png"
         }
+    },
+    "icons": {
+        "16": "images/icon16.png",
+        "32": "images/icon32.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
     },
     "options_page": "options.html",
     "background": {

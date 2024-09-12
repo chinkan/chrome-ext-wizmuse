@@ -1,0 +1,27 @@
+name: Pack Chrome Extension
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        types: [closed]
+        branches: [main]
+
+jobs:
+    pack:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Pack extension
+              run: |
+                  mkdir packed-extension
+                  zip -r packed-extension/extension.zip . -x "*.git*" "packed-extension/*" "*.github/*"
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: packed-extension
+                  path: packed-extension/extension.zip

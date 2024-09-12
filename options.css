@@ -252,6 +252,40 @@ select {
     padding: 2px;
 }
 
+#ollama-warning {
+    display: none;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-left: 45px;
+    margin-bottom: 15px;
+}
+
+#ollama-warning::before {
+    content: '\26A0'; /* Unicode 警告符號 */
+    font-size: 24px;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffc107;
+}
+
+#ollama-warning p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+#ollama-warning strong {
+    color: #e65100;
+}
+
 #options-container {
     position: fixed;
     inset: 0;
@@ -370,4 +404,77 @@ select {
 
 .action-btn .material-icons {
     font-size: 16px;
+}
+
+.form-notice {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.form-notice .material-icons {
+    font-size: 1.2em;
+    margin-right: 5px;
+    color: #2196f3;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+    min-height: 150px; /* 增加最小高度 */
+    resize: vertical; /* 允許垂直調整大小 */
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#prompt-content {
+    font-family: monospace; /* 使用等寬字體，更適合編寫提示 */
+    line-height: 1.5; /* 增加行高，提高可讀性 */
+}
+
+/* 調整提示表格中內容列的寬度 */
+#prompts-table td:nth-child(2) {
+    width: 50%; /* 讓內容列佔據更多空間 */
+    max-width: 300px; /* 設置最大寬度 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 調整操作按鈕列的寬度 */
+#prompts-table td:last-child {
+    width: 100px;
+    text-align: center;
+}
+
+/* 美化提示表單容器 */
+#prompt-form-container {
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 調整按鈕組的樣式 */
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.button-group button {
+    margin-left: 10px;
 }
