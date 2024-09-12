@@ -17,7 +17,7 @@ async function handleSummarize(request, sendResponse) {
             'selectedLLMIndex',
             'language',
         ]);
-        console.log('Background script received message:', result);
+        console.log('get from storage', result);
 
         if (
             !result.llmConfigs ||
@@ -35,8 +35,8 @@ async function handleSummarize(request, sendResponse) {
             defaultConfig.provider,
             defaultConfig
         );
-        const prompts = PromptFactory.getPrompt(
-            'summarize',
+        const prompts = await PromptFactory.getPrompt(
+            request.selectPromptIndex,
             request.text,
             result.language
         );

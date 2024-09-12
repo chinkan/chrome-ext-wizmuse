@@ -31,7 +31,7 @@
                     />
                     <div class="profile-info">
                         <p
-                            ><i class="material-icons">info</i> Version：0.1
+                            ><i class="material-icons">info</i> Version：0.2
                             beta</p
                         >
                         <p
@@ -182,6 +182,9 @@
                                 </label>
                             </div>
                         </div>
+                        <div id="ollama-warning" class="warning-message" style="display: none;">
+                            <p>Warning: When using Ollama, please ensure that the environment variable `Ollama_ORIGINS` is set to "*" to allow Chrome extension access.</p>
+                        </div>
                         <div class="form-group" id="api-key-container">
                             <label for="api-key">API Key：</label>
                             <input
@@ -238,7 +241,8 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Prompt</th>
+                            <th>System Prompt</th>
+                            <th>User Prompt</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -262,17 +266,25 @@
                             />
                         </div>
                         <div class="form-group">
-                            <label for="prompt-content">Prompt Content：</label>
+                            <label for="system-prompt">System Prompt：</label>
                             <textarea
-                                id="prompt-content"
-                                placeholder="Enter your prompt here"
+                                id="system-prompt"
+                                placeholder="Enter your system prompt here"
                                 required
                             ></textarea>
-                            <p class="form-notice">
-                                <i class="material-icons">info</i>
-                                Note: You can use {{content}} tag in the prompt, the system will inject the website content here.
-                            </p>
                         </div>
+                        <div class="form-group">
+                            <label for="user-prompt">User Prompt：</label>
+                            <textarea
+                                id="user-prompt"
+                                placeholder="Enter your user prompt here"
+                                required
+                            ></textarea>
+                        </div>
+                        <p class="form-notice">
+                            <i class="material-icons">info</i>
+                            Note: You can use {{content}} tag in the prompts, the system will inject the website content here.
+                        </p>
                         <div class="form-group button-group">
                             <button type="submit" class="primary-button">Save Prompt</button>
                             <button type="button" id="cancel-prompt-form" class="secondary-button">Cancel</button>

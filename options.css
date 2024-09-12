@@ -252,6 +252,40 @@ select {
     padding: 2px;
 }
 
+#ollama-warning {
+    display: none;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding-left: 45px;
+    margin-bottom: 15px;
+}
+
+#ollama-warning::before {
+    content: '\26A0'; /* Unicode 警告符號 */
+    font-size: 24px;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffc107;
+}
+
+#ollama-warning p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+#ollama-warning strong {
+    color: #e65100;
+}
+
 #options-container {
     position: fixed;
     inset: 0;

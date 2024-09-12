@@ -241,18 +241,22 @@ document.addEventListener('DOMContentLoaded', function () {
             endpoint: endpointUrl,
         });
 
+        const ollamaWarning = document.getElementById('ollama-warning');
+
         if (provider.toLowerCase() === 'ollama') {
             endpointInput.style.display = 'block';
             apiKeyInput.style.display = 'none';
             endpointDisplay.style.display = 'none';
             apiKeyInput.removeAttribute('required');
             apiKeyContainer.style.display = 'none';
+            ollamaWarning.style.display = 'block'; // 顯示 Ollama 警告
         } else {
             endpointInput.style.display = 'none';
             apiKeyInput.style.display = 'block';
             endpointDisplay.style.display = 'block';
             apiKeyInput.setAttribute('required', '');
             apiKeyContainer.style.display = 'block';
+            ollamaWarning.style.display = 'none'; // 隱藏 Ollama 警告
         }
 
         try {
@@ -480,7 +484,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = promptsTable.insertRow();
         row.innerHTML = `
             <td>${prompt.name}</td>
-            <td>${truncateText(prompt.content, 50)}</td>
+            <td>${truncateText(prompt.systemPrompt, 50)}</td>
+            <td>${truncateText(prompt.userPrompt, 50)}</td>
             <td>
                 <button class="edit-btn action-btn" data-index="${index}" title="Edit Prompt">
                     <i class="material-icons">edit</i>
@@ -493,14 +498,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateDefaultPromptSelect(prompts, defaultIndex) {
-        defaultPromptSelect.innerHTML = prompts
-            .map(
-                (prompt, index) =>
-                    `<option value="${index}" ${
-                        index === defaultIndex ? 'selected' : ''
-                    }>${prompt.name}</option>`
-            )
-            .join('');
+        defaultPromptSelect.innerHTML = `
+            <option value="-1" ${
+                defaultIndex === undefined ? 'selected' : ''
+            }>Use Default Prompt</option>
+            ${prompts
+                .map(
+                    (prompt, index) =>
+                        `<option value="${index}" ${
+                            index === defaultIndex ? 'selected' : ''
+                        }>${prompt.name}</option>`
+                )
+                .join('')}
+        `;
     }
 
     function truncateText(text, maxLength) {
@@ -520,8 +530,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function editPrompt(index) {
-        // TODO: 實現編輯提示的邏輯
-        console.log('Edit Prompt', index);
+        getStorageData('prompts').then((result) => {
+            const prompts = result.prompts || [];
+            if (index >= 0 && index < prompts.length) {
+                const prompt = prompts[index];
+                document.getElementById('prompt-name').value = prompt.name;
+                document.getElementById('system-prompt').value =
+                    prompt.systemPrompt;
+                document.getElementById('user-prompt').value =
+                    prompt.userPrompt;
+
+                promptFormContainer.style.display = 'block';
+                addPromptBtn.style.display = 'none';
+
+                isEditing = true;
+                editingIndex = index;
+
+                // 更改表單標題
+                document.querySelector(
+                    '#prompt-form-container h2'
+                ).textContent = 'Edit Prompt';
+            }
+        });
     }
 
     function deletePrompt(index) {
@@ -540,25 +570,48 @@ document.addEventListener('DOMContentLoaded', function () {
     addPromptBtn.addEventListener('click', function () {
         promptFormContainer.style.display = 'block';
         promptForm.reset();
+        // 設置表單標題
+        document.querySelector('#prompt-form-container h2').textContent =
+            'New Prompt';
     });
 
     // 取消添加提示
     cancelPromptFormBtn.addEventListener('click', function () {
         promptFormContainer.style.display = 'none';
+        addPromptBtn.style.display = 'block';
+        isEditing = false;
+        editingIndex = -1;
+        promptForm.reset();
+        // 重置表單標題
+        document.querySelector('#prompt-form-container h2').textContent =
+            'New Prompt';
     });
 
     // 保存提示表單
     promptForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const name = document.getElementById('prompt-name').value;
-        const content = document.getElementById('prompt-content').value;
+        const systemPrompt = document.getElementById('system-prompt').value;
+        const userPrompt = document.getElementById('user-prompt').value;
 
         getStorageData('prompts').then((result) => {
             let prompts = result.prompts || [];
-            prompts.push({ name, content });
+
+            if (isEditing) {
+                // 更新現有提示
+                prompts[editingIndex] = { name, systemPrompt, userPrompt };
+            } else {
+                // 添加新提示
+                prompts.push({ name, systemPrompt, userPrompt });
+            }
+
             setStorageData({ prompts: prompts }).then(() => {
                 loadPrompts(); // 重新加載提示列表
                 promptFormContainer.style.display = 'none';
+                addPromptBtn.style.display = 'block';
+                isEditing = false;
+                editingIndex = -1;
+                promptForm.reset();
             });
         });
     });
@@ -567,9 +620,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document
         .getElementById('save-default-prompt')
         .addEventListener('click', function () {
-            const defaultPromptIndex = defaultPromptSelect.value;
+            const defaultPromptIndex = parseInt(defaultPromptSelect.value);
             setStorageData({
-                defaultPromptIndex: parseInt(defaultPromptIndex),
+                defaultPromptIndex:
+                    defaultPromptIndex === -1 ? undefined : defaultPromptIndex,
             }).then(() => {
                 alert('Prompt Saved');
             });
