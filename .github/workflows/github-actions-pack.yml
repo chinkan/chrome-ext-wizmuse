@@ -12,6 +12,10 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
+            - name: Clone drawdown repository
+              run: |
+                  git clone https://github.com/adamvleggett/drawdown.git lib/drawdown
+
             - name: Pack extension
               run: |
                   mkdir packed-extension
