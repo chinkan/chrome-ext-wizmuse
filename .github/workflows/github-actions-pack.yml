@@ -3,9 +3,6 @@ name: Pack Chrome Extension
 on:
     push:
         branches: [main]
-    pull_request:
-        types: [closed]
-        branches: [main]
 
 jobs:
     pack:
@@ -21,7 +18,7 @@ jobs:
                   zip -r packed-extension/extension.zip . -x "*.git*" "packed-extension/*" "*.github/*"
 
             - name: Upload artifact
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: packed-extension
                   path: packed-extension/extension.zip
