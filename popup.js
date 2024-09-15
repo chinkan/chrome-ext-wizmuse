@@ -118,7 +118,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function handleError(message) {
         console.error('Error:', message);
-        errorMessage.textContent = message;
+        errorMessage.textContent =
+            'Something went wrong. Please refresh the page and try again.';
         errorMessage.style.display = 'flex';
         loadingIndicator.style.display = 'none';
     }

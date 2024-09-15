@@ -1,5 +1,7 @@
 # WizMuse
 
+[![Pack Chrome Extension](https://github.com/chinkan/chrome-ext-wizmuse/actions/workflows/github-actions-pack.yml/badge.svg?branch=main)](https://github.com/chinkan/chrome-ext-wizmuse/actions/workflows/github-actions-pack.yml)
+
 ## Project Overview
 
 WizMuse is a browser extension that allows users to summarize web pages using various large language model (LLM) providers. The extension provides a user-friendly interface to extract key points and generate concise summaries of the content on any webpage.
