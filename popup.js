@@ -93,10 +93,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 handleError(response.error);
             } else if (response && response.summary) {
                 await setStorageData({
-                    [url]: {
-                        summary: response.summary,
-                        title: title,
-                        timestamp: Date.now(),
+                    histories: {
+                        [url]: {
+                            summary: response.summary,
+                            title: title,
+                            timestamp: Date.now(),
+                        },
                     },
                 });
                 displaySummary(response.summary);

@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         languageSelect.value = result.language;
                     }
 
-                    loadModels();
+                    // loadModels();
                 }
                 if (result.selectedLLMIndex) {
                     defaultSelect.value = result.selectedLLMIndex;
@@ -380,10 +380,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadSummaryHistory() {
         historyTable.innerHTML = '';
-        getStorageData(null).then((items) => {
-            for (let key in items) {
+        getStorageData(['histories']).then((items) => {
+            for (let key in items.histories) {
                 if (key.startsWith('http')) {
-                    const data = items[key];
+                    const data = items.histories[key];
                     const row = historyTable.insertRow();
                     row.innerHTML = `
                         <td>${key}</td>
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    loadSummaryHistory();
+    // loadSummaryHistory();
 
     const promptsTable = document
         .getElementById('prompts-table')
