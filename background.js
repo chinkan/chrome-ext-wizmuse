@@ -3,7 +3,6 @@ import PromptFactory from './prompt-providers/prompt-factory.js';
 import { getStorageData } from './utils/storage.js';
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Background script received message:', request);
     if (request.action === 'summarize') {
         handleSummarize(request, sendResponse);
         return true; // 表示我們會異步發送回應
@@ -17,7 +16,6 @@ async function handleSummarize(request, sendResponse) {
             'selectedLLMIndex',
             'language',
         ]);
-        console.log('get from storage', result);
 
         if (
             !result.llmConfigs ||
@@ -45,7 +43,6 @@ async function handleSummarize(request, sendResponse) {
             prompts.userPrompt,
             prompts.systemPrompt
         );
-        console.log('summary', summary);
 
         if (summary && typeof summary.summary === 'string') {
             sendResponse({ summary: summary.summary });

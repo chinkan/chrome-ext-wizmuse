@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     isFirstInstall: false,
                     llmConfigs: [
                         {
-                            name: 'OpenAI',
+                            name: 'OpenAI Example',
                             provider: 'openai',
                             apiKey: 'sk-proj-93345678901234567890', // example api key
                             model: 'gpt-4o',
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         languageSelect.value = result.language;
                     }
 
-                    loadModels();
+                    // loadModels();
                 }
                 if (result.selectedLLMIndex) {
                     defaultSelect.value = result.selectedLLMIndex;
@@ -380,13 +380,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadSummaryHistory() {
         historyTable.innerHTML = '';
-        getStorageData(null).then((items) => {
-            for (let key in items) {
+        getStorageData(['histories']).then((items) => {
+            for (let key in items.histories) {
                 if (key.startsWith('http')) {
-                    const data = items[key];
+                    const data = items.histories[key];
                     const row = historyTable.insertRow();
                     row.innerHTML = `
-                        <td>${key}</td>
+                        <td><a href="${key}" target="_blank">${key}</a></td>
                         <td>${data.title}</td>
                         <td>${new Date(data.timestamp).toLocaleString()}</td>
                         <td>
@@ -416,9 +416,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = e.target.closest('tr');
         const url = row.cells[0].textContent;
         if (e.target.tagName === 'TD') {
-            getStorageData(url).then((result) => {
-                if (result[url]) {
-                    alert(result[url].summary);
+            getStorageData(['histories']).then((result) => {
+                if (result.histories[url]) {
+                    alert(result.histories[url].summary);
                 }
             });
         } else if (
@@ -426,17 +426,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.target.parentElement.classList.contains('copy-btn')) ||
             e.target.classList.contains('copy-btn')
         ) {
-            getStorageData(url).then((result) => {
-                if (result[url]) {
-                    navigator.clipboard
-                        .writeText(result[url].summary)
-                        .then(() => {
-                            alert('Summary copied to clipboard');
-                        })
-                        .catch((err) => {
-                            console.error('Copy failed:', err);
-                            alert('Copy failed, please copy manually');
-                        });
+            getStorageData(['histories']).then((result) => {
+                if (result.histories[url]) {
+                    setTimeout(() => {
+                        navigator.clipboard
+                            .writeText(result.histories[url].summary)
+                            .then(() => {
+                                alert('Summary copied to clipboard');
+                            })
+                            .catch((err) => {
+                                console.error('Copy failed:', err);
+                                alert('Copy failed, please copy manually');
+                            });
+                    }, 100);
                 }
             });
         } else if (
@@ -444,13 +446,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.target.parentElement.classList.contains('delete-btn')) ||
             e.target.classList.contains('delete-btn')
         ) {
-            removeStorageData(url).then(() => {
-                row.remove();
+            getStorageData(['histories']).then((result) => {
+                if (confirm('Are you sure you want to delete this history?')) {
+                    delete result.histories[url];
+                    setStorageData({ histories: result });
+                    row.remove();
+                }
             });
         }
     });
-
-    loadSummaryHistory();
 
     const promptsTable = document
         .getElementById('prompts-table')
