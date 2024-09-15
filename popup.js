@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             chrome.tabs.query({ active: true, currentWindow: true }, resolve);
         });
         const currentUrl = tabs[0].url;
-        const result = await getStorageData(currentUrl);
-        if (result[currentUrl]) {
-            displaySummary(result[currentUrl].summary);
+        const result = await getStorageData(['histories']);
+        if (result && result.histories && result.histories[currentUrl]) {
+            displaySummary(result.histories[currentUrl].summary);
         } else {
             await generateSummary();
         }
@@ -78,10 +78,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         selectPromptIndex
     ) {
         try {
-            console.error(
-                'selectPromptIndex before send message',
-                selectPromptIndex
-            );
             const response = await chrome.runtime.sendMessage({
                 action: 'summarize',
                 text: content,
