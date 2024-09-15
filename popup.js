@@ -194,9 +194,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             regenerateContainer.appendChild(modelSelect);
 
             // 創建提示選擇下拉選單
+            const promptOptions =
+                result.prompts && result.prompts.length > 0
+                    ? [{ name: 'Use Default Prompt' }, ...result.prompts]
+                    : [{ name: 'Use Default Prompt' }];
             const promptSelect = createCustomSelect(
                 'Select a prompt',
-                [{ name: 'Use Default Prompt' }, ...result.prompts],
+                promptOptions,
                 (prompt, index) => prompt.name,
                 true // 指示這是 promptSelect
             );

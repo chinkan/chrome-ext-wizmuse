@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     isFirstInstall: false,
                     llmConfigs: [
                         {
-                            name: 'OpenAI',
+                            name: 'OpenAI Example',
                             provider: 'openai',
                             apiKey: 'sk-proj-93345678901234567890', // example api key
                             model: 'gpt-4o',
