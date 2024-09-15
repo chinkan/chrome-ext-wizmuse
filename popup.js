@@ -196,17 +196,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             regenerateContainer.appendChild(modelSelect);
 
             // 創建提示選擇下拉選單
-            const promptOptions =
-                result.prompts && result.prompts.length > 0
-                    ? [{ name: 'Use Default Prompt' }, ...result.prompts]
-                    : [{ name: 'Use Default Prompt' }];
-            const promptSelect = createCustomSelect(
-                'Select a prompt',
-                promptOptions,
-                (prompt, index) => prompt.name,
-                true // 指示這是 promptSelect
-            );
-            regenerateContainer.appendChild(promptSelect);
+            let promptSelect;
+            let selectedPromptIndex = -1;
+            if (result.prompts && result.prompts.length > 0) {
+                const promptOptions = [
+                    { name: 'Use Default Prompt' },
+                    ...result.prompts,
+                ];
+                promptSelect = createCustomSelect(
+                    'Select a prompt',
+                    promptOptions,
+                    (prompt, index) => prompt.name,
+                    true // 指示這是 promptSelect
+                );
+                regenerateContainer.appendChild(promptSelect);
+            }
 
             const confirmButton = document.createElement('button');
             confirmButton.textContent = 'Confirm';
@@ -215,9 +219,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const selectedModelIndex =
                     modelSelect.querySelector('.option.selected')?.dataset
                         .value;
-                const selectedPromptIndex =
-                    promptSelect.querySelector('.option.selected')?.dataset
-                        .value || -1;
+                const selectedPromptIndex = promptSelect
+                    ? promptSelect.querySelector('.option.selected')?.dataset
+                          .value || -1
+                    : -1;
                 if (selectedModelIndex !== undefined) {
                     await callback(selectedModelIndex, selectedPromptIndex);
                     regenerateContainer.style.display = 'none';
@@ -231,12 +236,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             function enableConfirmButton() {
                 confirmButton.disabled = !(
                     modelSelect.querySelector('.option.selected') &&
-                    promptSelect.querySelector('.option.selected')
+                    (promptSelect
+                        ? promptSelect.querySelector('.option.selected')
+                        : true)
                 );
             }
 
             // 為兩個選擇器添加事件監聽器
-            [modelSelect, promptSelect].forEach((select) => {
+            [modelSelect, promptSelect].filter(Boolean).forEach((select) => {
                 select
                     .querySelector('.selected-option')
                     .addEventListener('click', () => {
