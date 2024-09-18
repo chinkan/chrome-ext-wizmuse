@@ -28,6 +28,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const languageSelect = document.getElementById('language');
     const apiKeyContainer = document.getElementById('api-key-container');
 
+    const openaiEndpointContainer = document.getElementById(
+        'openai-endpoint-container'
+    );
+    const openaiEndpointToggle = document.getElementById(
+        'openai-endpoint-toggle'
+    );
+
     let isEditing = false;
     let editingIndex = -1;
 
@@ -125,8 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (result.language !== undefined) {
                         languageSelect.value = result.language;
                     }
-
-                    // loadModels();
                 }
                 if (result.selectedLLMIndex) {
                     defaultSelect.value = result.selectedLLMIndex;
@@ -142,6 +147,10 @@ document.addEventListener('DOMContentLoaded', function () {
     llmProviderGrid.addEventListener('change', function (e) {
         if (e.target.type === 'radio') {
             loadModels();
+            endpointInput.value = LLMProviderFactory.getDefaultEndpoint(
+                e.target.value
+            );
+            endpointDisplay.textContent = endpointInput.value;
         }
     });
     apiKey.addEventListener('input', function (e) {
@@ -231,9 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'input[name="llm-provider"]:checked'
         ).value;
         const apiKeyInput = document.getElementById('api-key');
-        const endpointUrl = LLMProviderFactory.getDefaultEndpoint(provider);
-        endpointDisplay.textContent = endpointUrl;
-        endpointInput.value = endpointUrl;
+        const endpointUrl = endpointInput.value;
 
         const providerInstance = LLMProviderFactory.getProvider(provider, {
             apiKey: apiKeyInput.value,
@@ -250,13 +257,27 @@ document.addEventListener('DOMContentLoaded', function () {
             apiKeyInput.removeAttribute('required');
             apiKeyContainer.style.display = 'none';
             ollamaWarning.style.display = 'block'; // 顯示 Ollama 警告
+            openaiEndpointContainer.style.display = 'none';
+        } else if (provider.toLowerCase() === 'openai') {
+            apiKeyInput.style.display = 'block';
+            endpointInput.style.display = openaiEndpointToggle.checked
+                ? 'block'
+                : 'none';
+            endpointDisplay.style.display = openaiEndpointToggle.checked
+                ? 'none'
+                : 'block';
+            apiKeyInput.setAttribute('required', '');
+            apiKeyContainer.style.display = 'block';
+            ollamaWarning.style.display = 'none';
+            openaiEndpointContainer.style.display = 'block';
         } else {
             endpointInput.style.display = 'none';
             apiKeyInput.style.display = 'block';
             endpointDisplay.style.display = 'block';
             apiKeyInput.setAttribute('required', '');
             apiKeyContainer.style.display = 'block';
-            ollamaWarning.style.display = 'none'; // 隱藏 Ollama 警告
+            ollamaWarning.style.display = 'none';
+            openaiEndpointContainer.style.display = 'none';
         }
 
         try {
@@ -632,4 +653,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Prompt Saved');
             });
         });
+
+    // 添加以下事件監聽器
+    openaiEndpointToggle.addEventListener('change', function (e) {
+        endpointInput.style.display = e.target.checked ? 'block' : 'none';
+        endpointDisplay.style.display = e.target.checked ? 'none' : 'block';
+    });
 });
