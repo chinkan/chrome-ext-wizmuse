@@ -19,7 +19,7 @@ class OpenAIProvider extends LLMProvider {
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: text },
                 ],
-                max_tokens: 150,
+                max_tokens: 1024,
             }),
         });
         const data = await response.json();
