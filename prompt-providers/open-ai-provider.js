@@ -5,7 +5,7 @@ class OpenAIProvider extends LLMProvider {
         super(config);
     }
 
-    async summarize(text, systemPrompt) {
+    async summarize(text, systemPrompt, advancedSettings) {
         const response = await fetch(`${this.endpoint}/chat/completions`, {
             // 使用相同的端點
             method: 'POST',
@@ -19,7 +19,10 @@ class OpenAIProvider extends LLMProvider {
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: text },
                 ],
-                max_tokens: 1024,
+                max_tokens: advancedSettings.maxTokens,
+                temperature: advancedSettings.temperature,
+                top_p: advancedSettings.topP,
+                // OpenAI 不直接支持 top_k，所以我們省略它
             }),
         });
         const data = await response.json();

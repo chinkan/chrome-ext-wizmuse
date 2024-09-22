@@ -41,7 +41,8 @@ async function handleSummarize(request, sendResponse) {
 
         const summary = await provider.summarize(
             prompts.userPrompt,
-            prompts.systemPrompt
+            prompts.systemPrompt,
+            defaultConfig.advancedSettings // 傳遞高級設置
         );
 
         if (summary && typeof summary.summary === 'string') {

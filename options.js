@@ -66,7 +66,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function checkFirstInstall(callback) {
-        getStorageData(['isFirstInstall']).then((result) => {
+        getStorageData(['isFirstInstall', 'lastVersion']).then((result) => {
+            const currentVersion = '0.5.0';
             if (result.isFirstInstall === undefined) {
                 // 這是首次安裝
                 setStorageData({
@@ -94,6 +95,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Welcome to WizMuse! Please set up your LLM provider and API key.'
                 );
                 changePage('options');
+            } else if (result.lastVersion !== currentVersion) {
+                // 更新版本
+
+                //load all configs and add advanced settings
+                getStorageData(['llmConfigs']).then((result) => {
+                    result.llmConfigs.forEach((config) => {
+                        config.advancedSettings = {
+                            maxTokens: 1024,
+                            temperature: 0.7,
+                            topP: 0.9,
+                            topK: 5,
+                        };
+                    });
+                });
+
+                setStorageData({ lastVersion: currentVersion });
+                callback();
             } else {
                 callback();
             }
@@ -170,8 +188,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const apiKey = document.getElementById('api-key').value;
         const model = modelSelect.value;
         const endpoint = endpointInput.value;
+        const advancedSettings = getAdvancedSettings();
 
-        const config = { name, provider, apiKey, model, endpoint };
+        const config = {
+            name,
+            provider,
+            apiKey,
+            model,
+            endpoint,
+            advancedSettings,
+        };
 
         if (isEditing) {
             updateConfigInTable(config, editingIndex);
@@ -228,11 +254,6 @@ document.addEventListener('DOMContentLoaded', function () {
             language: language,
         });
         alert('Config Saved');
-        await getStorageData(['selectedLLMIndex', 'language']).then(function (
-            result
-        ) {
-            console.log('Config Saved', result);
-        });
     });
 
     async function loadModels() {
@@ -332,6 +353,10 @@ document.addEventListener('DOMContentLoaded', function () {
         getStorageData('llmConfigs').then((result) => {
             const row = table.rows[index];
             const config = result.llmConfigs[index];
+
+            if (config.advancedSettings) {
+                setAdvancedSettings(config.advancedSettings);
+            }
 
             document.getElementById('config-name').value = config.name;
             const radioButton = document.querySelector(
@@ -659,4 +684,43 @@ document.addEventListener('DOMContentLoaded', function () {
         endpointInput.style.display = e.target.checked ? 'block' : 'none';
         endpointDisplay.style.display = e.target.checked ? 'none' : 'block';
     });
+
+    // 添加這些函數到 options.js
+
+    function toggleAdvancedSettings() {
+        const container = document.getElementById(
+            'advanced-settings-container'
+        );
+        const button = document.getElementById('toggle-advanced-settings');
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            button.textContent = 'Hide Advanced Settings';
+        } else {
+            container.style.display = 'none';
+            button.textContent = 'Show Advanced Settings';
+        }
+    }
+
+    function getAdvancedSettings() {
+        return {
+            temperature: parseFloat(
+                document.getElementById('temperature').value
+            ),
+            topK: parseInt(document.getElementById('top-k').value),
+            topP: parseFloat(document.getElementById('top-p').value),
+            maxTokens: parseInt(document.getElementById('max-tokens').value),
+        };
+    }
+
+    function setAdvancedSettings(settings) {
+        document.getElementById('temperature').value = settings.temperature;
+        document.getElementById('top-k').value = settings.topK;
+        document.getElementById('top-p').value = settings.topP;
+        document.getElementById('max-tokens').value = settings.maxTokens;
+    }
+
+    // 添加事件監聽器
+    document
+        .getElementById('toggle-advanced-settings')
+        .addEventListener('click', toggleAdvancedSettings);
 });

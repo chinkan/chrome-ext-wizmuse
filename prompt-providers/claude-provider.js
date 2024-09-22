@@ -5,7 +5,7 @@ class ClaudeProvider extends LLMProvider {
         super(config);
     }
 
-    async summarize(text, systemPrompt) {
+    async summarize(text, systemPrompt, advancedSettings) {
         const response = await fetch(`${this.endpoint}/v1/messages`, {
             method: 'POST',
             headers: {
@@ -25,7 +25,10 @@ class ClaudeProvider extends LLMProvider {
                         content: text,
                     },
                 ],
-                max_tokens: 1000,
+                max_tokens: advancedSettings.maxTokens,
+                temperature: advancedSettings.temperature,
+                top_p: advancedSettings.topP,
+                top_k: advancedSettings.topK,
             }),
         });
 
