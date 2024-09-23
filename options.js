@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', function () {
         'openai-endpoint-toggle'
     );
 
+    // 獲取版本號並顯示在頁面上
+    const versionElement = document.getElementById('version');
+    const manifestData = chrome.runtime.getManifest();
+    versionElement.textContent = `Version: ${manifestData.version} (Beta)`;
+
     let isEditing = false;
     let editingIndex = -1;
 
@@ -170,8 +175,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const apiKey = document.getElementById('api-key').value;
         const model = modelSelect.value;
         const endpoint = endpointInput.value;
+        const advancedSettings = getAdvancedSettings();
 
-        const config = { name, provider, apiKey, model, endpoint };
+        const config = {
+            name,
+            provider,
+            apiKey,
+            model,
+            endpoint,
+            advancedSettings,
+        };
 
         if (isEditing) {
             updateConfigInTable(config, editingIndex);
@@ -228,11 +241,6 @@ document.addEventListener('DOMContentLoaded', function () {
             language: language,
         });
         alert('Config Saved');
-        await getStorageData(['selectedLLMIndex', 'language']).then(function (
-            result
-        ) {
-            console.log('Config Saved', result);
-        });
     });
 
     async function loadModels() {
@@ -332,6 +340,10 @@ document.addEventListener('DOMContentLoaded', function () {
         getStorageData('llmConfigs').then((result) => {
             const row = table.rows[index];
             const config = result.llmConfigs[index];
+
+            if (config.advancedSettings) {
+                setAdvancedSettings(config.advancedSettings);
+            }
 
             document.getElementById('config-name').value = config.name;
             const radioButton = document.querySelector(
@@ -659,4 +671,43 @@ document.addEventListener('DOMContentLoaded', function () {
         endpointInput.style.display = e.target.checked ? 'block' : 'none';
         endpointDisplay.style.display = e.target.checked ? 'none' : 'block';
     });
+
+    // 添加這些函數到 options.js
+
+    function toggleAdvancedSettings() {
+        const container = document.getElementById(
+            'advanced-settings-container'
+        );
+        const button = document.getElementById('toggle-advanced-settings');
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            button.textContent = 'Hide Advanced Settings';
+        } else {
+            container.style.display = 'none';
+            button.textContent = 'Show Advanced Settings';
+        }
+    }
+
+    function getAdvancedSettings() {
+        return {
+            temperature: parseFloat(
+                document.getElementById('temperature').value
+            ),
+            topK: parseInt(document.getElementById('top-k').value),
+            topP: parseFloat(document.getElementById('top-p').value),
+            maxTokens: parseInt(document.getElementById('max-tokens').value),
+        };
+    }
+
+    function setAdvancedSettings(settings) {
+        document.getElementById('temperature').value = settings.temperature;
+        document.getElementById('top-k').value = settings.topK;
+        document.getElementById('top-p').value = settings.topP;
+        document.getElementById('max-tokens').value = settings.maxTokens;
+    }
+
+    // 添加事件監聽器
+    document
+        .getElementById('toggle-advanced-settings')
+        .addEventListener('click', toggleAdvancedSettings);
 });

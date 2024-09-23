@@ -5,7 +5,7 @@ class GroqProvider extends LLMProvider {
         super(config);
     }
 
-    async summarize(text, systemPrompt) {
+    async summarize(text, systemPrompt, advancedSettings) {
         const response = await fetch(
             `${this.endpoint}/chat/completions`, // 使用配置中的端點
             {
@@ -26,6 +26,10 @@ class GroqProvider extends LLMProvider {
                         },
                     ],
                     model: this.model, // 使用配置中的模型
+                    max_tokens: advancedSettings.maxTokens,
+                    temperature: advancedSettings.temperature,
+                    top_p: advancedSettings.topP,
+                    // Groq 可能不支持 top_k，所以我們省略它
                 }),
             }
         );

@@ -30,10 +30,7 @@
                         class="profile-image"
                     />
                     <div class="profile-info">
-                        <p
-                            ><i class="material-icons">info</i> Version：0.4
-                            beta</p
-                        >
+                        <p><i class="material-icons">info</i> <span id="version">Version: Loading...</span></p>
                         <p
                             ><i class="material-icons">person</i>
                             Author：chinkan.ai</p
@@ -219,6 +216,28 @@
                                 placeholder="API Endpoint"
                                 style="display: none"
                             ></input>
+                        </div>
+                        <div class="form-group">
+                            <label for="advanced-settings">Advanced Settings:</label>
+                            <button id="toggle-advanced-settings" type="button">Show Advanced Settings</button>
+                            <div id="advanced-settings-container" style="display: none;">
+                                <div class="form-group">
+                                    <label for="temperature">Temperature:</label>
+                                    <input type="number" id="temperature" name="temperature" min="0" max="1" step="0.1" value="0.7">
+                                </div>
+                                <div class="form-group">
+                                    <label for="top-k">Top K:</label>
+                                    <input type="number" id="top-k" name="top-k" min="0" step="1" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="top-p">Top P:</label>
+                                    <input type="number" id="top-p" name="top-p" min="0" max="1" step="0.01" value="0.9">
+                                </div>
+                                <div class="form-group">
+                                    <label for="max-tokens">Max Tokens:</label>
+                                    <input type="number" id="max-tokens" name="max-tokens" min="1" step="1" value="1024">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group button-group">
                             <button type="submit" class="primary-button"

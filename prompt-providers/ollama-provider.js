@@ -5,8 +5,7 @@ class OllamaProvider extends LLMProvider {
         super(config);
     }
 
-    async summarize(text, systemPrompt) {
-        // 新增 systemPrompt 參數
+    async summarize(text, systemPrompt, advancedSettings) {
         const response = await fetch(`${this.endpoint}/api/generate`, {
             method: 'POST',
             headers: {
@@ -15,13 +14,13 @@ class OllamaProvider extends LLMProvider {
             body: JSON.stringify({
                 model: this.model,
                 prompt: text,
-                system: systemPrompt, // 傳遞 systemPrompt
+                system: systemPrompt,
                 stream: false,
                 options: {
-                    temperature: 0.7,
-                    top_k: 50,
-                    top_p: 0.95,
-                    num_predict: 1000,
+                    temperature: advancedSettings.temperature,
+                    top_k: advancedSettings.topK,
+                    top_p: advancedSettings.topP,
+                    num_predict: advancedSettings.maxTokens,
                 },
             }),
         });
