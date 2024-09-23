@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function checkFirstInstall(callback) {
         getStorageData(['isFirstInstall', 'lastVersion']).then((result) => {
-            const currentVersion = '0.5.0';
             if (result.isFirstInstall === undefined) {
                 // 這是首次安裝
                 setStorageData({
