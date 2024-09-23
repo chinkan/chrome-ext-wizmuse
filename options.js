@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', function () {
         'openai-endpoint-toggle'
     );
 
+    // 獲取版本號並顯示在頁面上
+    const versionElement = document.getElementById('version');
+    const manifestData = chrome.runtime.getManifest();
+    versionElement.textContent = `Version: ${manifestData.version} (Beta)`;
+
     let isEditing = false;
     let editingIndex = -1;
 
@@ -95,23 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Welcome to WizMuse! Please set up your LLM provider and API key.'
                 );
                 changePage('options');
-            } else if (result.lastVersion !== currentVersion) {
-                // 更新版本
-
-                //load all configs and add advanced settings
-                getStorageData(['llmConfigs']).then((result) => {
-                    result.llmConfigs.forEach((config) => {
-                        config.advancedSettings = {
-                            maxTokens: 1024,
-                            temperature: 0.7,
-                            topP: 0.9,
-                            topK: 5,
-                        };
-                    });
-                });
-
-                setStorageData({ lastVersion: currentVersion });
-                callback();
             } else {
                 callback();
             }

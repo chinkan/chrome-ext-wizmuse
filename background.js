@@ -1,6 +1,6 @@
 import LLMProviderFactory from './prompt-providers/llm-provider-factory.js';
 import PromptFactory from './prompt-providers/prompt-factory.js';
-import { getStorageData } from './utils/storage.js';
+import { getStorageData, setStorageData } from './utils/storage.js';
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'summarize') {
@@ -57,7 +57,40 @@ async function handleSummarize(request, sendResponse) {
 }
 
 chrome.runtime.onInstalled.addListener(function (details) {
-    if (details.reason === 'install') {
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.runtime.openOptionsPage();
+    }
+    if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+        var manifestData = chrome.runtime.getManifest();
+        getStorageData(['lastVersion']).then((result) => {
+            if (
+                result.lastVersion === undefined ||
+                result.lastVersion < manifestData.version
+            ) {
+                // 更新版本
+
+                if (
+                    result.lastVersion.localeCompare('0.5.0', undefined, {
+                        numeric: true,
+                        sensitivity: 'base',
+                    }) < 0
+                ) {
+                    //load all configs and add advanced settings
+                    getStorageData(['llmConfigs']).then((result) => {
+                        result.llmConfigs.forEach((config) => {
+                            config.advancedSettings = {
+                                maxTokens: 1024,
+                                temperature: 0.7,
+                                topP: 0.9,
+                                topK: 5,
+                            };
+                        });
+                        setStorageData({ llmConfigs: result.llmConfigs });
+                    });
+                }
+
+                setStorageData({ lastVersion: manifestData.version });
+            }
+        });
     }
 });
