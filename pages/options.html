@@ -1,0 +1,169 @@
+<div id="options-page">
+    <h1>Options</h1>
+    <button id="add-config-btn" class="fab">+</button>
+    <table id="llm-configs-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Provider</th>
+                <th>API Key</th>
+                <th>Model</th>
+                <th>API Endpoint</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div id="options-container" style="display: none">
+        <form id="options-form">
+            <div class="form-group">
+                <label for="config-name">Config Name：</label>
+                <input
+                    id="config-name"
+                    type="text"
+                    placeholder="Config Name"
+                    required
+                />
+            </div>
+            <div class="form-group">
+                <label for="llm-provider"
+                    >Choose LLM Provider：</label
+                >
+                <div id="llm-provider-grid">
+                    <label class="provider-option">
+                        <input
+                            type="radio"
+                            name="llm-provider"
+                            value="openai"
+                        />
+                        <img
+                            src="images/logo-openai.svg"
+                            alt="OpenAI"
+                            class="provider-logo"
+                        />
+                        <span>OpenAI</span>
+                    </label>
+                    <label class="provider-option">
+                        <input
+                            type="radio"
+                            name="llm-provider"
+                            value="claude"
+                        />
+                        <img
+                            src="images/logo-claude.svg"
+                            alt="Claude AI"
+                            class="provider-logo"
+                        />
+                        <span>Claude AI</span>
+                    </label>
+                    <label class="provider-option">
+                        <input
+                            type="radio"
+                            name="llm-provider"
+                            value="ollama"
+                        />
+                        <img
+                            src="images/logo-ollama.png"
+                            alt="Ollama"
+                            class="provider-logo"
+                        />
+                        <span>Ollama</span>
+                    </label>
+                    <label class="provider-option">
+                        <input
+                            type="radio"
+                            name="llm-provider"
+                            value="groq"
+                        />
+                        <img
+                            src="images/logo-groq.svg"
+                            alt="Groq"
+                            class="provider-logo"
+                        />
+                        <span>Groq</span>
+                    </label>
+                </div>
+            </div>
+            <div id="ollama-warning" class="warning-message" style="display: none;">
+                <p>Warning: When using Ollama, please ensure that the environment variable `Ollama_ORIGINS` is set to "*" to allow Chrome extension access.</p>
+            </div>
+            <div class="form-group" id="api-key-container">
+                <label for="api-key">API Key：</label>
+                <input
+                    type="text"
+                    id="api-key"
+                    name="api-key"
+                    required
+                />
+            </div>
+            <div class="form-group">
+                <label for="model">Model：</label>
+                <select id="model" name="model" required></select>
+            </div>
+            <div class="form-group" id="openai-endpoint-container">
+                <div class="toggle-switch-container">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="openai-endpoint-toggle" />
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Use Custom Endpoint (for OpenRouter or other providers)</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="endpoint-display">API Endpoint：</label>
+                <div
+                    id="endpoint-display"
+                    class="endpoint-display"
+                ></div>
+                <input
+                    type="text"
+                    id="endpoint"
+                    placeholder="API Endpoint"
+                    style="display: none"
+                ></input>
+            </div>
+            <div class="form-group">
+                <label for="advanced-settings">Advanced Settings:</label>
+                <button id="toggle-advanced-settings" type="button">Show Advanced Settings</button>
+                <div id="advanced-settings-container" style="display: none;">
+                    <div class="form-group">
+                        <label for="temperature">Temperature:</label>
+                        <input type="number" id="temperature" name="temperature" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                    <div class="form-group">
+                        <label for="top-k">Top K:</label>
+                        <input type="number" id="top-k" name="top-k" min="0" step="1" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="top-p">Top P:</label>
+                        <input type="number" id="top-p" name="top-p" min="0" max="1" step="0.01" value="0.9">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-tokens">Max Tokens:</label>
+                        <input type="number" id="max-tokens" name="max-tokens" min="1" step="1" value="1024">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group button-group">
+                <button type="submit" class="primary-button"
+                    >Save</button
+                >
+                <button
+                    type="button"
+                    id="cancel-form"
+                    class="secondary-button"
+                    >Cancel</button
+                >
+            </div>
+        </form>
+    </div>
+    <div class="form-group">
+        <label for="language">Language：</label>
+        <input type="text" id="language" />
+    </div>
+    <div class="form-group">
+        <label for="default-llm-config">Default LLM Config：</label>
+        <select id="default-llm-config"></select>
+    </div>
+    <button id="save-default">Save Config</button>
+</div>

@@ -1,0 +1,66 @@
+<div id="prompts-page">
+    <h1>Prompts</h1>
+    <button id="add-prompt-btn" class="fab">+</button>
+    <table id="prompts-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>System Prompt</th>
+                <th>User Prompt</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div class="form-group">
+        <label for="default-prompt">Default Prompt：</label>
+        <select id="default-prompt"></select>
+    </div>
+    <button id="save-default-prompt">Save Default Prompt</button>
+
+    <div id="prompt-form-container" style="display: none">
+        <form id="prompt-form">
+            <div class="form-group">
+                <label for="prompt-name">Prompt Name：</label>
+                <input
+                    id="prompt-name"
+                    type="text"
+                    placeholder="Prompt Name"
+                    required
+                />
+            </div>
+            <div class="form-group">
+                <label for="system-prompt">System Prompt：</label>
+                <textarea
+                    id="system-prompt"
+                    placeholder="Enter your system prompt here"
+                    required
+                ></textarea>
+            </div>
+            <div class="form-group">
+                <label for="user-prompt">User Prompt：</label>
+                <textarea
+                    id="user-prompt"
+                    placeholder="Enter your user prompt here"
+                    required
+                ></textarea>
+            </div>
+            <p class="form-notice">
+                <i class="material-icons">info</i>
+                Note: You can use {{content}} tag in the prompts, the system
+                will inject the website content here.
+            </p>
+            <div class="form-group button-group">
+                <button type="submit" class="primary-button"
+                    >Save Prompt</button
+                >
+                <button
+                    type="button"
+                    id="cancel-prompt-form"
+                    class="secondary-button"
+                    >Cancel</button
+                >
+            </div>
+        </form>
+    </div>
+</div>
