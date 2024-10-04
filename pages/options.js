@@ -98,12 +98,12 @@ export function initializeOptionsPage() {
         );
     }
 
-    async function handleProviderChange(e) {
+    function handleProviderChange(e) {
         if (e.target.type === 'radio') {
-            await loadModels();
             elements.endpointInput.value =
                 LLMProviderFactory.getDefaultEndpoint(e.target.value);
             elements.endpointDisplay.textContent = elements.endpointInput.value;
+            loadModels();
         }
     }
 
@@ -198,13 +198,10 @@ export function initializeOptionsPage() {
             return;
         }
 
-        elements.modelSelect.innerHTML = '<option value="">Loading...</option>';
-
         const providerValue = provider.value;
         const apiKey = elements.apiKeyInput.value;
         const model = elements.modelSelect.value;
         const endpointUrl = elements.endpointInput.value;
-
         const providerInstance = LLMProviderFactory.getProvider(providerValue, {
             apiKey: apiKey,
             model: model,
@@ -244,6 +241,14 @@ export function initializeOptionsPage() {
             if (ollamaWarning) ollamaWarning.style.display = 'none';
             elements.openaiEndpointContainer.style.display = 'none';
         }
+
+        if (providerValue !== 'ollama' && apiKey === '') {
+            elements.modelSelect.innerHTML =
+                '<option value="">Please enter your API key first</option>';
+            return;
+        }
+
+        elements.modelSelect.innerHTML = '<option value="">Loading...</option>';
 
         try {
             const models = await providerInstance.getModelLists();
