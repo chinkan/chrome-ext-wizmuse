@@ -39,6 +39,7 @@ class PromptFactory {
             userPrompt: selectedPrompt.userPrompt
                 .replace('{{content}}', text)
                 .replace('{{language}}', language),
+            promptName: selectedPrompt.name,
         };
     }
 
@@ -77,6 +78,7 @@ Here is the content to summarize:
 
 {{content}}
 `,
+            name: 'Default Prompt',
         };
     }
 }
