@@ -142,24 +142,15 @@ export function initializeOptionsPage() {
     }
 
     function handleTableClick(e) {
-        if (
-            e.target.classList.contains('delete-btn') ||
-            e.target.parentElement.classList.contains('delete-btn')
-        ) {
-            const row = e.target.closest('tr');
-            if (
-                confirm(
-                    `Are you sure you want to delete ${row.cells[0].textContent}?`
-                )
-            ) {
-                const index = row.rowIndex - 1;
-                row.remove();
-                removeFromDefaultSelect(index);
-                removeConfig(index);
-            }
-        } else if (e.target.tagName === 'TD') {
-            const row = e.target.closest('tr');
-            const index = row.rowIndex - 1;
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const index = row.rowIndex - 1;
+        const deleteBtn = e.target.closest('.delete-btn');
+
+        if (deleteBtn) {
+            deleteConfig(index);
+        } else {
             editConfig(index);
         }
     }
@@ -276,7 +267,11 @@ export function initializeOptionsPage() {
             <td>${maskApiKey(config.apiKey)}</td>
             <td>${config.model}</td>
             <td>${config.endpoint}</td>
-            <td><button class="delete-btn"><i class="material-icons">delete</i></button></td>
+            <td>
+                <button class="delete-btn action-btn" data-index="${index}" title="Delete Config">
+                    <i class="material-icons">delete</i>
+                </button>
+            </td>
         `;
 
         index = index || elements.table.rows.length - 1;
@@ -411,6 +406,19 @@ export function initializeOptionsPage() {
             container.style.display = 'none';
             elements.toggleAdvancedSettings.textContent =
                 'Show Advanced Settings';
+        }
+    }
+
+    function deleteConfig(index) {
+        const row = elements.table.rows[index];
+        if (
+            confirm(
+                `Are you sure you want to delete ${row.cells[0].textContent}?`
+            )
+        ) {
+            row.remove();
+            removeFromDefaultSelect(index);
+            removeConfig(index);
         }
     }
 }

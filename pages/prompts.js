@@ -10,37 +10,56 @@ export async function prompts() {
         const promptsHtml = await response.text();
         return promptsHtml;
     } catch (error) {
-        console.error('加載 prompts.html 時出錯:', error);
-        return '<p>加載提示頁面時出錯</p>';
+        console.error('Error loading prompts.html:', error);
+        return '<p>Error loading prompts page</p>';
     }
 }
 
 export function initializePromptsPage() {
-    const promptsTable = document
-        .getElementById('prompts-table')
-        .getElementsByTagName('tbody')[0];
-    const defaultPromptSelect = document.getElementById('default-prompt');
-    const addPromptBtn = document.getElementById('add-prompt-btn');
-    const promptFormContainer = document.getElementById(
-        'prompt-form-container'
-    );
-    const promptForm = document.getElementById('prompt-form');
-    const cancelPromptFormBtn = document.getElementById('cancel-prompt-form');
+    // 常量定義區域
+    const elements = {
+        promptsTable: document
+            .getElementById('prompts-table')
+            .getElementsByTagName('tbody')[0],
+        defaultPromptSelect: document.getElementById('default-prompt'),
+        addPromptBtn: document.getElementById('add-prompt-btn'),
+        promptFormContainer: document.getElementById('prompt-form-container'),
+        promptForm: document.getElementById('prompt-form'),
+        cancelPromptFormBtn: document.getElementById('cancel-prompt-form'),
+        promptName: document.getElementById('prompt-name'),
+        systemPrompt: document.getElementById('system-prompt'),
+        userPrompt: document.getElementById('user-prompt'),
+        saveDefaultPromptBtn: document.getElementById('save-default-prompt'),
+    };
 
+    // 檢查元素是否存在
+    if (Object.values(elements).some((element) => !element)) {
+        console.error('Some elements are missing in the prompts page');
+        return;
+    }
+
+    // 狀態變量
     let isEditing = false;
     let editingIndex = -1;
 
+    // 初始化
     loadPrompts();
 
+    // 事件監聽器
+    elements.promptsTable.addEventListener('click', handleTableClick);
+    elements.addPromptBtn.addEventListener('click', showAddPromptForm);
+    elements.cancelPromptFormBtn.addEventListener('click', hidePromptForm);
+    elements.promptForm.addEventListener('submit', handlePromptFormSubmit);
+    elements.saveDefaultPromptBtn.addEventListener('click', saveDefaultPrompt);
+
+    // 私有函數
     function loadPrompts() {
         getStorageData(['prompts', 'defaultPromptIndex']).then((result) => {
             if (result.prompts) {
-                promptsTable.innerHTML = ''; // 清空表格
+                elements.promptsTable.innerHTML = '';
                 result.prompts.forEach((prompt, index) =>
                     addPromptToTable(prompt, index)
                 );
-
-                // 更新默認提示選擇
                 updateDefaultPromptSelect(
                     result.prompts,
                     result.defaultPromptIndex
@@ -50,15 +69,12 @@ export function initializePromptsPage() {
     }
 
     function addPromptToTable(prompt, index) {
-        const row = promptsTable.insertRow();
+        const row = elements.promptsTable.insertRow();
         row.innerHTML = `
             <td>${prompt.name}</td>
             <td>${truncateText(prompt.systemPrompt, 50)}</td>
             <td>${truncateText(prompt.userPrompt, 50)}</td>
             <td>
-                <button class="edit-btn action-btn" data-index="${index}" title="Edit Prompt">
-                    <i class="material-icons">edit</i>
-                </button>
                 <button class="delete-btn action-btn" data-index="${index}" title="Delete Prompt">
                     <i class="material-icons">delete</i>
                 </button>
@@ -67,7 +83,7 @@ export function initializePromptsPage() {
     }
 
     function updateDefaultPromptSelect(prompts, defaultIndex) {
-        defaultPromptSelect.innerHTML = `
+        elements.defaultPromptSelect.innerHTML = `
             <option value="-1" ${
                 defaultIndex === undefined ? 'selected' : ''
             }>Use Default Prompt</option>
@@ -83,118 +99,114 @@ export function initializePromptsPage() {
     }
 
     function truncateText(text, maxLength) {
-        if (text.length <= maxLength) return text;
-        return text.substr(0, maxLength) + '...';
+        return text.length <= maxLength
+            ? text
+            : text.substr(0, maxLength) + '...';
     }
 
-    // 處理提示表格的點擊事件
-    promptsTable.addEventListener('click', function (e) {
-        if (e.target.closest('.edit-btn')) {
-            const index = e.target.closest('.edit-btn').dataset.index;
-            editPrompt(index);
-        } else if (e.target.closest('.delete-btn')) {
-            const index = e.target.closest('.delete-btn').dataset.index;
+    function handleTableClick(e) {
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const index = row.rowIndex - 1;
+        const deleteBtn = e.target.closest('.delete-btn');
+
+        if (deleteBtn) {
             deletePrompt(index);
+        } else {
+            editPrompt(index);
         }
-    });
+    }
 
     function editPrompt(index) {
         getStorageData('prompts').then((result) => {
             const prompts = result.prompts || [];
             if (index >= 0 && index < prompts.length) {
                 const prompt = prompts[index];
-                document.getElementById('prompt-name').value = prompt.name;
-                document.getElementById('system-prompt').value =
-                    prompt.systemPrompt;
-                document.getElementById('user-prompt').value =
-                    prompt.userPrompt;
+                elements.promptName.value = prompt.name;
+                elements.systemPrompt.value = prompt.systemPrompt;
+                elements.userPrompt.value = prompt.userPrompt;
 
-                promptFormContainer.style.display = 'block';
-                addPromptBtn.style.display = 'none';
+                elements.promptFormContainer.style.display = 'block';
+                elements.addPromptBtn.style.display = 'none';
 
                 isEditing = true;
                 editingIndex = index;
 
-                // 更改表單標題
                 document.querySelector(
                     '#prompt-form-container h2'
-                ).textContent = '編輯提示';
+                ).textContent = 'Edit Prompt';
             }
         });
     }
 
     function deletePrompt(index) {
-        if (confirm('您確定要刪除這個提示嗎？')) {
+        const row = elements.promptsTable.rows[index];
+        if (
+            confirm(
+                `Are you sure you want to delete ${row.cells[0].textContent}?`
+            )
+        ) {
+            row.remove();
             getStorageData('prompts').then((result) => {
                 let prompts = result.prompts || [];
                 prompts.splice(index, 1);
                 setStorageData({ prompts: prompts }).then(() => {
-                    loadPrompts(); // 重新加載提示列表
+                    loadPrompts();
                 });
             });
         }
     }
 
-    // 添加新提示按鈕
-    addPromptBtn.addEventListener('click', function () {
-        promptFormContainer.style.display = 'block';
-        promptForm.reset();
-        // 設置表單標題
-        document.querySelector('#prompt-form-container h2').textContent =
-            '新增提示';
-    });
-
-    // 取消添加提示
-    cancelPromptFormBtn.addEventListener('click', function () {
-        promptFormContainer.style.display = 'none';
-        addPromptBtn.style.display = 'block';
+    function showAddPromptForm() {
+        elements.promptFormContainer.style.display = 'block';
+        elements.promptForm.reset();
+        elements.addPromptBtn.style.display = 'none';
         isEditing = false;
         editingIndex = -1;
-        promptForm.reset();
-        // 重置表單標題
         document.querySelector('#prompt-form-container h2').textContent =
-            '新增提示';
-    });
+            'Add New Prompt';
+    }
 
-    // 保存提示表單
-    promptForm.addEventListener('submit', function (e) {
+    function hidePromptForm() {
+        elements.promptFormContainer.style.display = 'none';
+        elements.addPromptBtn.style.display = 'block';
+        isEditing = false;
+        editingIndex = -1;
+        elements.promptForm.reset();
+        document.querySelector('#prompt-form-container h2').textContent =
+            'Add New Prompt';
+    }
+
+    function handlePromptFormSubmit(e) {
         e.preventDefault();
-        const name = document.getElementById('prompt-name').value;
-        const systemPrompt = document.getElementById('system-prompt').value;
-        const userPrompt = document.getElementById('user-prompt').value;
+        const name = elements.promptName.value;
+        const systemPrompt = elements.systemPrompt.value;
+        const userPrompt = elements.userPrompt.value;
 
         getStorageData('prompts').then((result) => {
             let prompts = result.prompts || [];
 
             if (isEditing) {
-                // 更新現有提示
                 prompts[editingIndex] = { name, systemPrompt, userPrompt };
             } else {
-                // 添加新提示
                 prompts.push({ name, systemPrompt, userPrompt });
             }
 
             setStorageData({ prompts: prompts }).then(() => {
-                loadPrompts(); // 重新加載提示列表
-                promptFormContainer.style.display = 'none';
-                addPromptBtn.style.display = 'block';
-                isEditing = false;
-                editingIndex = -1;
-                promptForm.reset();
+                loadPrompts();
+                hidePromptForm();
             });
         });
-    });
+    }
 
-    // 保存默認提示
-    document
-        .getElementById('save-default-prompt')
-        .addEventListener('click', function () {
-            const defaultPromptIndex = parseInt(defaultPromptSelect.value);
-            setStorageData({
-                defaultPromptIndex:
-                    defaultPromptIndex === -1 ? undefined : defaultPromptIndex,
-            }).then(() => {
-                alert('提示已保存');
-            });
+    function saveDefaultPrompt() {
+        const defaultPromptIndex = parseInt(elements.defaultPromptSelect.value);
+        setStorageData({
+            defaultPromptIndex:
+                defaultPromptIndex === -1 ? undefined : defaultPromptIndex,
+        }).then(() => {
+            alert('Prompt saved');
         });
+    }
 }

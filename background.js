@@ -46,7 +46,11 @@ async function handleSummarize(request, sendResponse) {
         );
 
         if (summary && typeof summary.summary === 'string') {
-            sendResponse({ summary: summary.summary });
+            sendResponse({
+                summary: summary.summary,
+                promptName: prompts.promptName,
+                providerName: provider.providerName,
+            });
         } else {
             throw new Error('Invalid summary format received from provider');
         }

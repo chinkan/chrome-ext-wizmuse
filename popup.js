@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                             summary: response.summary,
                             title: title,
                             timestamp: Date.now(),
+                            promptName: response.promptName,
+                            providerName: response.providerName,
                         },
                     },
                 });
@@ -126,18 +128,75 @@ document.addEventListener('DOMContentLoaded', async function () {
         .getElementById('copy-summary')
         .addEventListener('click', copySummary);
 
-    function copySummary() {
-        const summaryContent = document.getElementById('summary').innerText;
-        navigator.clipboard.writeText(summaryContent).then(
-            function () {
-                console.log('Summary copied to clipboard');
-                showTooltip('Copied to clipboard');
-            },
-            function (err) {
-                console.error('Copy failed: ', err);
-                showTooltip('Copy failed');
+    async function copySummary() {
+        try {
+            const tabs = await new Promise((resolve) => {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    resolve
+                );
+            });
+            const currentUrl = tabs[0].url;
+            const result = await getStorageData([
+                'histories',
+                'llmConfigs',
+                'prompts',
+                'selectedLLMIndex',
+            ]);
+
+            if (result && result.histories && result.histories[currentUrl]) {
+                const summaryData = result.histories[currentUrl];
+                const selectedLLMIndex = result.selectedLLMIndex;
+                const selectedLLM = result.llmConfigs[selectedLLMIndex];
+
+                const promptName = summaryData.promptName || 'Default Prompt';
+                const providerName = selectedLLM ? selectedLLM.provider : '';
+
+                let poweredByMessage = `\n\nSummarized by WizMuse`;
+                if (promptName !== 'Default Prompt') {
+                    poweredByMessage += ` using ${promptName}`;
+                }
+                if (providerName && providerName !== 'Unknown Provider') {
+                    poweredByMessage += ` by ${providerName}`;
+                }
+                poweredByMessage += `.\nUrl: ${currentUrl}`;
+
+                const fullText = summaryData.summary + poweredByMessage;
+
+                try {
+                    await navigator.clipboard.writeText(fullText);
+                    console.log('Summary copied to clipboard');
+                    showTooltip('Copied to clipboard');
+                } catch (err) {
+                    console.error('Clipboard write failed:', err);
+                    fallbackCopy(fullText);
+                }
+            } else {
+                console.error('No summary found for the current URL');
+                showTooltip('No summary available');
             }
-        );
+        } catch (err) {
+            console.error('Copy failed: ', err);
+            showTooltip('Copy failed');
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            const successful = document.execCommand('copy');
+            const msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Fallback: Copying text command was ' + msg);
+            showTooltip('Copied to clipboard');
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+            showTooltip('Copy failed');
+        }
+        document.body.removeChild(textArea);
     }
 
     function showTooltip(message) {
