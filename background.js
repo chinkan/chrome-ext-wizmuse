@@ -49,7 +49,7 @@ async function handleSummarize(request, sendResponse) {
             sendResponse({
                 summary: summary.summary,
                 promptName: prompts.promptName,
-                providerName: provider.providerName,
+                providerName: defaultConfig.name,
             });
         } else {
             throw new Error('Invalid summary format received from provider');

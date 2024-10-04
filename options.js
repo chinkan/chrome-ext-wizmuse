@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const menuItems = document.querySelectorAll('.menu-item');
 
     checkFirstInstall(function () {
-        // 載入初始頁面（關於頁面）
-        changePage('about');
+        changePage('options');
     });
 
     menuItems.forEach((item) => {
@@ -95,7 +94,6 @@ function checkFirstInstall(callback) {
             alert(
                 'Welcome to WizMuse! Please set up your LLM provider and API key.'
             );
-            changePage('options');
         } else {
             callback();
         }
