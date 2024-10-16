@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const menuItems = document.querySelectorAll('.menu-item');
 
     checkFirstInstall(function () {
-        changePage('options');
+        changePage('about');
     });
 
     menuItems.forEach((item) => {

@@ -10,14 +10,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             chrome.tabs.query({ active: true, currentWindow: true }, resolve);
         });
         const currentUrl = tabs[0].url;
-        const result = await getStorageData(['histories']);
-        if (result && result.histories && result.histories[currentUrl]) {
-            displaySummary(result.histories[currentUrl].summary);
+        const key = `histories.${currentUrl}`;
+        const result = await getStorageData([key]);
+        if (result && result[key]) {
+            displaySummary(result[key].summary);
         } else {
             await generateSummary();
         }
     } catch (error) {
-        handleError(error.message);
+        handleError(error);
     }
 
     async function generateSummary(
@@ -66,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 throw new Error('Invalid response');
             }
         } catch (error) {
-            handleError(error.message);
+            handleError(error);
         }
     }
 
@@ -86,26 +87,25 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
 
             if (response && response.error) {
-                handleError(response.error);
+                handleError(new Error(response.error));
             } else if (response && response.summary) {
+                const key = `histories.${url}`;
                 await setStorageData({
-                    histories: {
-                        [url]: {
-                            summary: response.summary,
-                            title: title,
-                            timestamp: Date.now(),
-                            promptName: response.promptName,
-                            providerName: response.providerName,
-                        },
+                    [key]: {
+                        summary: response.summary,
+                        title: title,
+                        timestamp: Date.now(),
+                        promptName: response.promptName,
+                        providerName: response.providerName,
                     },
                 });
                 displaySummary(response.summary);
             } else {
-                handleError('Invalid summarization response');
+                handleError(new Error('Invalid summary response'));
             }
         } catch (error) {
-            console.error('Runtime error:', error);
-            handleError(error.message || 'An unknown error occurred');
+            console.error('Runtime error:', error.message);
+            handleError(error);
         }
     }
 
@@ -116,10 +116,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         loadingIndicator.style.display = 'none';
     }
 
-    function handleError(message) {
-        console.error('Error:', message);
-        errorMessage.textContent =
-            'Something went wrong. Please refresh the page and try again.';
+    function handleError(error) {
+        let message = 'Something went wrong. Please refresh the page and try again.';
+        if (error instanceof Error) {
+            message = error.message || message;
+        } else if (typeof error === 'string') {
+            message = error;
+        }
+        errorMessage.textContent = message;
         errorMessage.style.display = 'flex';
         loadingIndicator.style.display = 'none';
     }
@@ -324,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
             });
         } catch (error) {
-            handleError(error.message);
+            handleError(error);
         }
     }
 
