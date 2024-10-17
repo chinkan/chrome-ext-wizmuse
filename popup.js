@@ -38,20 +38,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             const currentTab = tabs[0];
             const currentUrl = currentTab.url;
             const currentTitle = currentTab.title;
-            const currentDomain = getFullDomain(currentUrl);
+            const currentDomain = getBaseDomain(currentUrl);
 
             // 獲取所有域名設置
-            const result = await getStorageData(['domainSettings']);
-            const domainSettings = result.domainSettings || {};
+            const result = await getStorageData([`domainSettings.${currentDomain}`]);
+            const domainSettings = result[`domainSettings.${currentDomain}`] || {};
 
             // 檢查是否有當前域名的特定設置
-            if (domainSettings[currentDomain]) {
+            if (domainSettings) {
                 selectedModelIndex =
                     selectedModelIndex ??
-                    domainSettings[currentDomain].selectedModelIndex;
+                    domainSettings.selectedModelIndex;
                 selectPromptIndex =
                     selectPromptIndex ??
-                    domainSettings[currentDomain].selectPromptIndex;
+                    domainSettings.selectPromptIndex;
             }
 
             const response = await chrome.tabs.sendMessage(currentTab.id, {
@@ -92,7 +92,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
 
             if (response && response.error) {
-                handleError(new Error(response.error));
+                if (response.error.includes('RateLimitExceeded')) {
+                    handleError(new Error('Content is too large for current model. Please try with a smaller text or a different model.'));
+                } else {
+                    handleError(new Error(response.error));
+                }
             } else if (response && response.summary) {
                 const key = `histories.${url}`;
                 await setStorageData({
@@ -135,8 +139,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function handleError(error) {
-        let message =
-            'Something went wrong. Please refresh the page and try again.';
+        let message = 'Something went wrong. Please refresh the page and try again.';
         if (error instanceof Error) {
             message = error.message || message;
         } else if (typeof error === 'string') {
@@ -145,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         errorMessage.textContent = message;
         errorMessage.style.display = 'flex';
         loadingIndicator.style.display = 'none';
+        summaryContainer.style.display = 'none';
     }
 
     document
@@ -422,7 +426,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 currentWindow: true,
             });
             const currentUrl = tabs[0].url;
-            const currentDomain = getFullDomain(currentUrl);
+            const currentDomain = getBaseDomain(currentUrl);
 
             const tipContainer = document.createElement('div');
             tipContainer.className = 'tip-container';
@@ -472,11 +476,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // 在文件的適當位置添加這個輔助函數
-    function getFullDomain(url) {
+    function getBaseDomain(url) {
         try {
             const urlObj = new URL(url);
-            return urlObj.hostname + urlObj.pathname;
+            return urlObj.hostname
         } catch (error) {
             console.error('Invalid URL:', url);
             return url;

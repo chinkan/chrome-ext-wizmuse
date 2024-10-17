@@ -4,12 +4,12 @@ import { getStorageData, setStorageData } from './utils/storage.js';
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'summarize') {
-        handleSummarize(request, sendResponse);
+        handleSummarize(request, sender, sendResponse);
         return true; // 表示我們會異步發送回應
     }
 });
 
-async function handleSummarize(request, sendResponse) {
+async function handleSummarize(request, sender, sendResponse) {
     try {
         const result = await getStorageData([
             'llmConfigs',
@@ -39,24 +39,20 @@ async function handleSummarize(request, sendResponse) {
             result.language
         );
 
-        const summary = await provider.summarize(
-            prompts.userPrompt,
-            prompts.systemPrompt,
-            defaultConfig.advancedSettings // 傳遞高級設置
-        );
+        const summary = await provider.summarize(request.text, prompts.userPrompt, prompts.systemPrompt, defaultConfig.advancedSettings);
 
-        if (summary && typeof summary.summary === 'string') {
-            sendResponse({
-                summary: summary.summary,
-                promptName: prompts.promptName,
-                providerName: defaultConfig.name,
-            });
-        } else {
-            throw new Error('Invalid summary format received from provider');
+        if (!summary || typeof summary.summary !== 'string') {
+            throw new Error('Invalid summary response from provider');
         }
+
+        sendResponse({
+            summary: summary.summary,
+            promptName: prompts.promptName,
+            providerName: defaultConfig.name,
+        });
     } catch (error) {
-        console.error('Error in background script:', error);
-        sendResponse({ error: error.message || 'An unknown error occurred' });
+        console.error('Error in handleSummarize:', error);
+        sendResponse({ error: error.message });
     }
 }
 

@@ -6,38 +6,54 @@ class GroqProvider extends LLMProvider {
     }
 
     async summarize(text, systemPrompt, advancedSettings) {
-        const response = await fetch(
-            `${this.endpoint}/chat/completions`, // 使用配置中的端點
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${this.apiKey}`,
-                },
-                body: JSON.stringify({
-                    messages: [
-                        {
-                            role: 'system',
-                            content: systemPrompt,
-                        },
-                        {
-                            role: 'user',
-                            content: text,
-                        },
-                    ],
-                    model: this.model, // 使用配置中的模型
-                    max_tokens: advancedSettings.maxTokens,
-                    temperature: advancedSettings.temperature,
-                    top_p: advancedSettings.topP,
-                    // Groq 可能不支持 top_k，所以我們省略它
-                }),
-            }
-        );
+        try {
+            const response = await fetch(
+                `${this.endpoint}/chat/completions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${this.apiKey}`,
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: systemPrompt,
+                            },
+                            {
+                                role: 'user',
+                                content: text,
+                            },
+                        ],
+                        model: this.model,
+                        max_tokens: advancedSettings.maxTokens,
+                        temperature: advancedSettings.temperature,
+                        top_p: advancedSettings.topP,
+                    }),
+                }
+            );
 
-        const data = await response.json();
-        return {
-            summary: data.choices[0]?.message?.content || '', // 返回摘要內容
-        };
+            if (!response.ok) {
+                const errorData = await response.json();
+                if (response.status === 413 && errorData.error && errorData.error.code === 'rate_limit_exceeded') {
+                    throw new Error('RateLimitExceeded: Content is too large for current model');
+                }
+                throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+            }
+
+            const data = await response.json();
+            if (!data.choices || !data.choices.length || !data.choices[0].message) {
+                throw new Error('Invalid response format from Groq API');
+            }
+
+            return {
+                summary: data.choices[0].message.content || '',
+            };
+        } catch (error) {
+            console.error('Groq API error:', error);
+            throw error;
+        }
     }
 
     async getModelLists() {
