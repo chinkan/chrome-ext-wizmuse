@@ -8,12 +8,8 @@ class PromptFactory {
 
         let selectedPrompt;
 
-        console.log('key:', key, 'type:', typeof key);
-        console.log('prompts:', prompts);
-        console.log('defaultPromptIndex:', defaultPromptIndex);
-
         // 將 key 轉換為數字
-        const numericKey = parseInt(key, 10);
+        const numericKey = key ? parseInt(key, 10) : -1;
 
         if (numericKey === -1 || isNaN(numericKey)) {
             selectedPrompt =

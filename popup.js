@@ -10,48 +10,52 @@ document.addEventListener('DOMContentLoaded', async function () {
             chrome.tabs.query({ active: true, currentWindow: true }, resolve);
         });
         const currentUrl = tabs[0].url;
-        const result = await getStorageData(['histories']);
-        if (result && result.histories && result.histories[currentUrl]) {
-            displaySummary(result.histories[currentUrl].summary);
+        const key = `histories.${currentUrl}`;
+        const result = await getStorageData([key]);
+        if (result && result[key]) {
+            displaySummary(result[key].summary);
         } else {
             await generateSummary();
         }
     } catch (error) {
-        handleError(error.message);
+        handleError(error);
     }
 
     async function generateSummary(
         selectedModelIndex = null,
-        selectPromptIndex = null
+        selectPromptIndex = null,
+        isRegenerate = false
     ) {
         loadingIndicator.style.display = 'flex';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
 
         try {
-            const tabs = await new Promise((resolve) => {
-                chrome.tabs.query(
-                    { active: true, currentWindow: true },
-                    resolve
-                );
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
             });
-
             const currentTab = tabs[0];
             const currentUrl = currentTab.url;
             const currentTitle = currentTab.title;
+            const currentDomain = getBaseDomain(currentUrl);
 
-            const response = await new Promise((resolve, reject) => {
-                chrome.tabs.sendMessage(
-                    currentTab.id,
-                    { action: 'getPageContent' },
-                    (response) => {
-                        if (chrome.runtime.lastError) {
-                            reject(new Error(chrome.runtime.lastError.message));
-                        } else {
-                            resolve(response);
-                        }
-                    }
-                );
+            // 獲取所有域名設置
+            const result = await getStorageData([`domainSettings.${currentDomain}`]);
+            const domainSettings = result[`domainSettings.${currentDomain}`] || {};
+
+            // 檢查是否有當前域名的特定設置
+            if (domainSettings) {
+                selectedModelIndex =
+                    selectedModelIndex ??
+                    domainSettings.selectedModelIndex;
+                selectPromptIndex =
+                    selectPromptIndex ??
+                    domainSettings.selectPromptIndex;
+            }
+
+            const response = await chrome.tabs.sendMessage(currentTab.id, {
+                action: 'getPageContent',
             });
 
             if (response && response.content) {
@@ -60,13 +64,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                     currentTitle,
                     response.content,
                     selectedModelIndex,
-                    selectPromptIndex
+                    selectPromptIndex,
+                    isRegenerate
                 );
             } else {
                 throw new Error('Invalid response');
             }
         } catch (error) {
-            handleError(error.message);
+            handleError(error);
         }
     }
 
@@ -75,7 +80,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         title,
         content,
         selectedModelIndex,
-        selectPromptIndex
+        selectPromptIndex,
+        isRegenerate
     ) {
         try {
             const response = await chrome.runtime.sendMessage({
@@ -86,26 +92,36 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
 
             if (response && response.error) {
-                handleError(response.error);
+                if (response.error.includes('RateLimitExceeded')) {
+                    handleError(new Error('Content is too large for current model. Please try with a smaller text or a different model.'));
+                } else {
+                    handleError(new Error(response.error));
+                }
             } else if (response && response.summary) {
+                const key = `histories.${url}`;
                 await setStorageData({
-                    histories: {
-                        [url]: {
-                            summary: response.summary,
-                            title: title,
-                            timestamp: Date.now(),
-                            promptName: response.promptName,
-                            providerName: response.providerName,
-                        },
+                    [key]: {
+                        summary: response.summary,
+                        title: title,
+                        timestamp: Date.now(),
+                        promptName: response.promptName,
+                        providerName: response.providerName,
                     },
                 });
                 displaySummary(response.summary);
+                if (
+                    isRegenerate &&
+                    selectedModelIndex !== null &&
+                    selectPromptIndex !== null
+                ) {
+                    showDomainSettingTip(selectedModelIndex, selectPromptIndex);
+                }
             } else {
-                handleError('Invalid summarization response');
+                handleError(new Error('Invalid summary response'));
             }
         } catch (error) {
-            console.error('Runtime error:', error);
-            handleError(error.message || 'An unknown error occurred');
+            console.error('Runtime error:', error.message);
+            handleError(error);
         }
     }
 
@@ -114,14 +130,25 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('summary').innerHTML = markdownHtml;
         summaryContainer.style.display = 'block';
         loadingIndicator.style.display = 'none';
+
+        // 移除舊嘅提示（如果有）
+        const oldTip = document.querySelector('.tip-container');
+        if (oldTip) {
+            oldTip.remove();
+        }
     }
 
-    function handleError(message) {
-        console.error('Error:', message);
-        errorMessage.textContent =
-            'Something went wrong. Please refresh the page and try again.';
+    function handleError(error) {
+        let message = 'Something went wrong. Please refresh the page and try again.';
+        if (error instanceof Error) {
+            message = error.message || message;
+        } else if (typeof error === 'string') {
+            message = error;
+        }
+        errorMessage.textContent = message;
         errorMessage.style.display = 'flex';
         loadingIndicator.style.display = 'none';
+        summaryContainer.style.display = 'none';
     }
 
     document
@@ -130,22 +157,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function copySummary() {
         try {
-            const tabs = await new Promise((resolve) => {
-                chrome.tabs.query(
-                    { active: true, currentWindow: true },
-                    resolve
-                );
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
             });
             const currentUrl = tabs[0].url;
             const result = await getStorageData([
-                'histories',
+                `histories.${currentUrl}`,
                 'llmConfigs',
                 'prompts',
                 'selectedLLMIndex',
             ]);
 
-            if (result && result.histories && result.histories[currentUrl]) {
-                const summaryData = result.histories[currentUrl];
+            if (result && result[`histories.${currentUrl}`]) {
+                const summaryData = result[`histories.${currentUrl}`];
                 const selectedLLMIndex = result.selectedLLMIndex;
                 const selectedLLM = result.llmConfigs[selectedLLMIndex];
 
@@ -324,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
             });
         } catch (error) {
-            handleError(error.message);
+            handleError(error);
         }
     }
 
@@ -376,11 +401,88 @@ document.addEventListener('DOMContentLoaded', async function () {
                 try {
                     await generateSummary(
                         selectedModelIndex,
-                        selectedPromptIndex
+                        selectedPromptIndex,
+                        true // 標記為重新生成
                     );
                 } catch (error) {
                     handleError(error.message);
                 }
             });
         });
+
+    // 新增一個函數嚟顯示域名設置提示
+    async function showDomainSettingTip(selectedModelIndex, selectPromptIndex) {
+        try {
+            const result = await getStorageData(['llmConfigs', 'prompts']);
+            const selectedModel = result.llmConfigs[selectedModelIndex];
+            const selectedPrompt =
+                selectPromptIndex !== -1
+                    ? result.prompts[selectPromptIndex]
+                    : null;
+
+            // 獲取當前頁面的 URL 和基本域名
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
+            });
+            const currentUrl = tabs[0].url;
+            const currentDomain = getBaseDomain(currentUrl);
+
+            const tipContainer = document.createElement('div');
+            tipContainer.className = 'tip-container';
+
+            const tipElement = document.createElement('div');
+            tipElement.className = 'tip';
+            tipElement.textContent = `Tip: Set "${selectedModel.name}" ${
+                selectedPrompt
+                    ? `with "${selectedPrompt.name}" prompt`
+                    : 'with default prompt'
+            } as default for ${currentDomain}.`;
+            tipContainer.appendChild(tipElement);
+
+            const setDefaultButton = document.createElement('button');
+            setDefaultButton.textContent = 'Set as Default';
+            setDefaultButton.className = 'set-default-button';
+            setDefaultButton.addEventListener('click', async () => {
+                const domainSettingsResult = await getStorageData([
+                    'domainSettings',
+                ]);
+                let domainSettings = domainSettingsResult.domainSettings || {};
+
+                domainSettings[currentDomain] = {
+                    selectedModelIndex: selectedModelIndex,
+                    selectPromptIndex: selectPromptIndex,
+                    llmConfigName: selectedModel.name,
+                    promptName: selectedPrompt
+                        ? selectedPrompt.name
+                        : 'Default Prompt',
+                };
+
+                await setStorageData({ domainSettings: domainSettings });
+
+                showTooltip(`Default set for ${currentDomain}`);
+            });
+            tipContainer.appendChild(setDefaultButton);
+
+            const summaryContainer =
+                document.getElementById('summary-container');
+            // 將提示插入到摘要容器的頂部
+            summaryContainer.insertBefore(
+                tipContainer,
+                summaryContainer.firstChild
+            );
+        } catch (error) {
+            console.error('Error showing domain setting tip:', error);
+        }
+    }
+
+    function getBaseDomain(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.hostname
+        } catch (error) {
+            console.error('Invalid URL:', url);
+            return url;
+        }
+    }
 });

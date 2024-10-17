@@ -1,5 +1,5 @@
 // History Page
-import { getStorageData, setStorageData } from '../utils/storage.js';
+import { getStorageData, setStorageData, getAllStorageData } from '../utils/storage.js';
 
 export async function history() {
     try {
@@ -29,10 +29,10 @@ export function initializeHistoryPage() {
 
     function loadSummaryHistory() {
         elements.historyTable.innerHTML = '';
-        getStorageData(['histories']).then((items) => {
-            for (let key in items.histories) {
-                if (key.startsWith('http')) {
-                    const data = items.histories[key];
+        getAllStorageData().then((items) => {
+            for (let key in items) {
+                if (key.startsWith('histories.')) {
+                    const data = items[key];
                     const row = elements.historyTable.insertRow();
                     row.innerHTML = `
                         <td><a href="${key}" target="_blank">${key}</a></td>

@@ -29,6 +29,20 @@ export const getStorageData = (key) => {
     });
 };
 
+
+// 從Chrome同步存儲獲取所有數據
+export const getAllStorageData = () => {
+    return new Promise((resolve, reject) => {
+        chrome.storage.sync.get(null, (result) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(result || {});
+            }
+        });
+    });
+};
+
 // 從Chrome同步存儲刪除數據
 export const removeStorageData = (key) => {
     return new Promise((resolve, reject) => {

@@ -638,3 +638,61 @@ input:checked + .slider:before {
     line-height: 1.6;
     white-space: pre-wrap;
 }
+
+/* 在文件末尾添加以下樣式 */
+
+#domains-page {
+    margin-top: 20px;
+}
+
+#domains-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#domains-table th,
+#domains-table td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: left;
+}
+
+#domains-table th {
+    background-color: var(--secondary-color);
+    font-weight: bold;
+}
+
+#domain-form-container {
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#domain-form .form-group {
+    margin-bottom: 15px;
+}
+
+#domain-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+#domain-form input[type='text'],
+#domain-form select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+#domain-form .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}

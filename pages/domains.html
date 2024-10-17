@@ -1,0 +1,48 @@
+<div id="domains-page">
+    <h1>Domain Settings</h1>
+    <button id="add-domain-btn" class="fab">+</button>
+    <table id="domains-table">
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th>LLM Config</th>
+                <th>Prompt</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="domain-form-container" style="display: none">
+        <form id="domain-form">
+            <div class="form-group">
+                <label for="domain-name">Domain：</label>
+                <input
+                    id="domain-name"
+                    type="text"
+                    placeholder="Enter domain (e.g., example.com)"
+                    required
+                />
+            </div>
+            <div class="form-group">
+                <label for="domain-llm-config">LLM Config：</label>
+                <select id="domain-llm-config" required></select>
+            </div>
+            <div class="form-group">
+                <label for="domain-prompt">Prompt：</label>
+                <select id="domain-prompt" required></select>
+            </div>
+            <div class="form-group button-group">
+                <button type="submit" class="primary-button"
+                    >Save Domain Setting</button
+                >
+                <button
+                    type="button"
+                    id="cancel-domain-form"
+                    class="secondary-button"
+                    >Cancel</button
+                >
+            </div>
+        </form>
+    </div>
+</div>
