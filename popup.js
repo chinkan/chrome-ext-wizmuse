@@ -23,32 +23,40 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function generateSummary(
         selectedModelIndex = null,
-        selectPromptIndex = null
+        selectPromptIndex = null,
+        isRegenerate = false
     ) {
         loadingIndicator.style.display = 'flex';
         errorMessage.style.display = 'none';
         summaryContainer.style.display = 'none';
 
         try {
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
+            });
             const currentTab = tabs[0];
             const currentUrl = currentTab.url;
             const currentTitle = currentTab.title;
-            const currentDomain = new URL(currentUrl).hostname;
+            const currentDomain = getFullDomain(currentUrl);
 
-            // 獲取域名特定設置
-            const domainSettings = await getStorageData(`domainSettings.${currentDomain}`);
+            // 獲取所有域名設置
+            const result = await getStorageData(['domainSettings']);
+            const domainSettings = result.domainSettings || {};
 
-            // 如果有域名特定設置，使用它們
-            if (domainSettings && domainSettings[`domainSettings.${currentDomain}`]) {
-                selectedModelIndex = selectedModelIndex ?? domainSettings[`domainSettings.${currentDomain}`].selectedModelIndex;
-                selectPromptIndex = selectPromptIndex ?? domainSettings[`domainSettings.${currentDomain}`].selectPromptIndex;
+            // 檢查是否有當前域名的特定設置
+            if (domainSettings[currentDomain]) {
+                selectedModelIndex =
+                    selectedModelIndex ??
+                    domainSettings[currentDomain].selectedModelIndex;
+                selectPromptIndex =
+                    selectPromptIndex ??
+                    domainSettings[currentDomain].selectPromptIndex;
             }
 
-            const response = await chrome.tabs.sendMessage(
-                currentTab.id,
-                { action: 'getPageContent' }
-            );
+            const response = await chrome.tabs.sendMessage(currentTab.id, {
+                action: 'getPageContent',
+            });
 
             if (response && response.content) {
                 await _summarize(
@@ -56,7 +64,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     currentTitle,
                     response.content,
                     selectedModelIndex,
-                    selectPromptIndex
+                    selectPromptIndex,
+                    isRegenerate
                 );
             } else {
                 throw new Error('Invalid response');
@@ -71,7 +80,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         title,
         content,
         selectedModelIndex,
-        selectPromptIndex
+        selectPromptIndex,
+        isRegenerate
     ) {
         try {
             const response = await chrome.runtime.sendMessage({
@@ -95,7 +105,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                     },
                 });
                 displaySummary(response.summary);
-                showDomainSettingTip(selectedModelIndex, selectPromptIndex);
+                if (
+                    isRegenerate &&
+                    selectedModelIndex !== null &&
+                    selectPromptIndex !== null
+                ) {
+                    showDomainSettingTip(selectedModelIndex, selectPromptIndex);
+                }
             } else {
                 handleError(new Error('Invalid summary response'));
             }
@@ -119,7 +135,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function handleError(error) {
-        let message = 'Something went wrong. Please refresh the page and try again.';
+        let message =
+            'Something went wrong. Please refresh the page and try again.';
         if (error instanceof Error) {
             message = error.message || message;
         } else if (typeof error === 'string') {
@@ -136,7 +153,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function copySummary() {
         try {
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
+            });
             const currentUrl = tabs[0].url;
             const result = await getStorageData([
                 `histories.${currentUrl}`,
@@ -272,8 +292,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             confirmButton.textContent = 'Confirm';
             confirmButton.disabled = true;
             confirmButton.addEventListener('click', async () => {
-                const selectedModelIndex = modelSelect.querySelector('.option.selected')?.dataset.value;
-                const selectedPromptIndex = promptSelect ? promptSelect.querySelector('.option.selected')?.dataset.value || -1 : -1;
+                const selectedModelIndex =
+                    modelSelect.querySelector('.option.selected')?.dataset
+                        .value;
+                const selectedPromptIndex = promptSelect
+                    ? promptSelect.querySelector('.option.selected')?.dataset
+                          .value || -1
+                    : -1;
                 if (selectedModelIndex !== undefined) {
                     await callback(selectedModelIndex, selectedPromptIndex);
                     regenerateContainer.style.display = 'none';
@@ -372,7 +397,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 try {
                     await generateSummary(
                         selectedModelIndex,
-                        selectedPromptIndex
+                        selectedPromptIndex,
+                        true // 標記為重新生成
                     );
                 } catch (error) {
                     handleError(error.message);
@@ -385,41 +411,75 @@ document.addEventListener('DOMContentLoaded', async function () {
         try {
             const result = await getStorageData(['llmConfigs', 'prompts']);
             const selectedModel = result.llmConfigs[selectedModelIndex];
-            const selectedPrompt = selectPromptIndex !== -1 ? result.prompts[selectPromptIndex] : null;
+            const selectedPrompt =
+                selectPromptIndex !== -1
+                    ? result.prompts[selectPromptIndex]
+                    : null;
 
-            // 獲取當前頁面嘅 URL 同基本域名
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            // 獲取當前頁面的 URL 和基本域名
+            const tabs = await chrome.tabs.query({
+                active: true,
+                currentWindow: true,
+            });
             const currentUrl = tabs[0].url;
-            const currentDomain = new URL(currentUrl).hostname;
+            const currentDomain = getFullDomain(currentUrl);
 
             const tipContainer = document.createElement('div');
             tipContainer.className = 'tip-container';
 
             const tipElement = document.createElement('div');
             tipElement.className = 'tip';
-            tipElement.textContent = `Tip: Set "${selectedModel.name}" ${selectedPrompt ? `with "${selectedPrompt.name}" prompt` : 'with default prompt'} as default for ${currentDomain}.`;
+            tipElement.textContent = `Tip: Set "${selectedModel.name}" ${
+                selectedPrompt
+                    ? `with "${selectedPrompt.name}" prompt`
+                    : 'with default prompt'
+            } as default for ${currentDomain}.`;
             tipContainer.appendChild(tipElement);
 
             const setDefaultButton = document.createElement('button');
             setDefaultButton.textContent = 'Set as Default';
             setDefaultButton.className = 'set-default-button';
             setDefaultButton.addEventListener('click', async () => {
-                await setStorageData({
-                    [`domainSettings.${currentDomain}`]: {
-                        selectedModelIndex: selectedModelIndex,
-                        selectPromptIndex: selectPromptIndex
-                    }
-                });
+                const domainSettingsResult = await getStorageData([
+                    'domainSettings',
+                ]);
+                let domainSettings = domainSettingsResult.domainSettings || {};
+
+                domainSettings[currentDomain] = {
+                    selectedModelIndex: selectedModelIndex,
+                    selectPromptIndex: selectPromptIndex,
+                    llmConfigName: selectedModel.name,
+                    promptName: selectedPrompt
+                        ? selectedPrompt.name
+                        : 'Default Prompt',
+                };
+
+                await setStorageData({ domainSettings: domainSettings });
 
                 showTooltip(`Default set for ${currentDomain}`);
             });
             tipContainer.appendChild(setDefaultButton);
 
-            const summaryContainer = document.getElementById('summary-container');
-            // 將提示插入到摘要容器嘅頂部
-            summaryContainer.insertBefore(tipContainer, summaryContainer.firstChild);
+            const summaryContainer =
+                document.getElementById('summary-container');
+            // 將提示插入到摘要容器的頂部
+            summaryContainer.insertBefore(
+                tipContainer,
+                summaryContainer.firstChild
+            );
         } catch (error) {
             console.error('Error showing domain setting tip:', error);
+        }
+    }
+
+    // 在文件的適當位置添加這個輔助函數
+    function getFullDomain(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.hostname + urlObj.pathname;
+        } catch (error) {
+            console.error('Invalid URL:', url);
+            return url;
         }
     }
 });

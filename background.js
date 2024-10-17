@@ -74,6 +74,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
                 // 更新版本
 
                 if (
+                    result.lastVersion &&
                     result.lastVersion.localeCompare('0.5.0', undefined, {
                         numeric: true,
                         sensitivity: 'base',

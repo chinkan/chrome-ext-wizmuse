@@ -2,6 +2,7 @@ import { aboutUs, initializeAboutUsPage } from './pages/about-us.js';
 import { options, initializeOptionsPage } from './pages/options.js';
 import { prompts, initializePromptsPage } from './pages/prompts.js';
 import { history, initializeHistoryPage } from './pages/history.js';
+import { domains, initializeDomainsPage } from './pages/domains.js';
 import { getStorageData, setStorageData } from './utils/storage.js';
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -37,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'prompts':
                     pageContent = await prompts();
                     break;
+                case 'domains':
+                    pageContent = await domains();
+                    break;
                 case 'history':
                     pageContent = await history();
                     break;
@@ -55,6 +59,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     initializeOptionsPage();
                 } else if (pageId === 'prompts') {
                     initializePromptsPage();
+                } else if (pageId === 'domains') {
+                    initializeDomainsPage();
                 } else if (pageId === 'history') {
                     initializeHistoryPage();
                 }
