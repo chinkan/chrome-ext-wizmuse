@@ -39,7 +39,7 @@ async function handleSummarize(request, sender, sendResponse) {
             result.language
         );
 
-        const summary = await provider.summarize(request.text, prompts.userPrompt, prompts.systemPrompt, defaultConfig.advancedSettings);
+        const summary = await provider.summarize(prompts.userPrompt, prompts.systemPrompt, defaultConfig.advancedSettings);
 
         if (!summary || typeof summary.summary !== 'string') {
             throw new Error('Invalid summary response from provider');
