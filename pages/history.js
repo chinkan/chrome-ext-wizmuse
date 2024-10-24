@@ -1,5 +1,5 @@
 // History Page
-import { getStorageData, setStorageData, getAllStorageData } from '../utils/storage.js';
+import { getStorageData, removeStorageData , getAllStorageData } from '../utils/storage.js';
 
 export async function history() {
     try {
@@ -144,11 +144,8 @@ export function initializeHistoryPage() {
 
     function deleteHistory(url, row) {
         if (confirm('Are you sure you want to delete this history record?')) {
-            getStorageData([`histories.${url}`]).then((result) => {
-                delete result[`histories.${url}`];
-                setStorageData(result).then(() => {
-                    row.remove();
-                });
+            removeStorageData([`histories.${url}`]).then(() => {
+                row.remove();
             });
         }
     }
