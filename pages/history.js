@@ -32,10 +32,11 @@ export function initializeHistoryPage() {
         getAllStorageData().then((items) => {
             for (let key in items) {
                 if (key.startsWith('histories.')) {
+                    const url = key.replace('histories.', '');
                     const data = items[key];
                     const row = elements.historyTable.insertRow();
                     row.innerHTML = `
-                        <td><a href="${key}" target="_blank">${key}</a></td>
+                        <td><a href="${url}" target="_blank">${url}</a></td>
                         <td>${data.title}</td>
                         <td>${new Date(data.timestamp).toLocaleString()}</td>
                         <td>
@@ -48,10 +49,10 @@ export function initializeHistoryPage() {
                             </div>
                         </td>
                         <td>
-                            <button class="copy-btn action-btn" data-url="${key}" title="Copy Summary">
+                            <button class="copy-btn action-btn" data-url="${url}" title="Copy Summary">
                                 <i class="material-icons">content_copy</i>
                             </button>
-                            <button class="delete-btn action-btn" data-url="${key}" title="Delete Summary">
+                            <button class="delete-btn action-btn" data-url="${url}" title="Delete Summary">
                                 <i class="material-icons">delete</i>
                             </button>
                         </td>
@@ -66,7 +67,6 @@ export function initializeHistoryPage() {
         if (!row) return;
         const url = row.cells[0].textContent;
         const target = e.target.closest('button');
-
         if (!target) {
             showSummary(url);
         } else if (target.classList.contains('copy-btn')) {
@@ -81,20 +81,20 @@ export function initializeHistoryPage() {
     });
 
     function showSummary(url) {
-        getStorageData(['histories']).then((result) => {
-            if (result.histories[url]) {
+        getStorageData([`histories.${url}`]).then((result) => {
+            if (result[`histories.${url}`]) {
                 elements.summaryContent.textContent =
-                    result.histories[url].summary;
+                    result[`histories.${url}`].summary;
                 elements.summaryModal.style.display = 'block';
             }
         });
     }
 
     function copySummary(url) {
-        getStorageData(['histories', 'llmConfigs', 'prompts']).then(
+        getStorageData([`histories.${url}`, 'llmConfigs', 'prompts']).then(
             (result) => {
-                if (result.histories[url]) {
-                    const summaryData = result.histories[url];
+                if (result[`histories.${url}`]) {
+                    const summaryData = result[`histories.${url}`];
                     const promptName =
                         summaryData.promptName || 'Default Prompt';
                     const providerName = summaryData.providerName;
@@ -144,9 +144,9 @@ export function initializeHistoryPage() {
 
     function deleteHistory(url, row) {
         if (confirm('Are you sure you want to delete this history record?')) {
-            getStorageData(['histories']).then((result) => {
-                delete result.histories[url];
-                setStorageData({ histories: result.histories }).then(() => {
+            getStorageData([`histories.${url}`]).then((result) => {
+                delete result[`histories.${url}`];
+                setStorageData(result).then(() => {
                     row.remove();
                 });
             });
