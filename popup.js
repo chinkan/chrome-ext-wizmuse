@@ -445,20 +445,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             setDefaultButton.className = 'set-default-button';
             setDefaultButton.addEventListener('click', async () => {
                 const domainSettingsResult = await getStorageData([
-                    'domainSettings',
+                    `domainSettings.${currentDomain}`,
                 ]);
-                let domainSettings = domainSettingsResult.domainSettings || {};
+                let domainSettings = domainSettingsResult[`domainSettings.${currentDomain}`] || {};
 
-                domainSettings[currentDomain] = {
+                domainSettings = {
                     selectedModelIndex: selectedModelIndex,
                     selectPromptIndex: selectPromptIndex,
                     llmConfigName: selectedModel.name,
-                    promptName: selectedPrompt
-                        ? selectedPrompt.name
-                        : 'Default Prompt',
+                    promptName: selectedPrompt ? selectedPrompt.name : 'Default Prompt',
                 };
 
-                await setStorageData({ domainSettings: domainSettings });
+                await setStorageData({ [`domainSettings.${currentDomain}`]: domainSettings });
 
                 showTooltip(`Default set for ${currentDomain}`);
             });
