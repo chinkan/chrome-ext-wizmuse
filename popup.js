@@ -1,4 +1,6 @@
 import { getStorageData, setStorageData } from './utils/storage.js';
+import { YoutubeTranscript } from 'youtube-transcript';
+import ContentExtractor from './utils/content-extractor.js';
 
 document.addEventListener('DOMContentLoaded', async function () {
     const loadingIndicator = document.getElementById('loading-indicator');
@@ -40,35 +42,66 @@ document.addEventListener('DOMContentLoaded', async function () {
             const currentTitle = currentTab.title;
             const currentDomain = getBaseDomain(currentUrl);
 
-            // 獲取所有域名設置
-            const result = await getStorageData([`domainSettings.${currentDomain}`]);
-            const domainSettings = result[`domainSettings.${currentDomain}`] || {};
+            // 獲取域名設置
+            const result = await getStorageData([
+                `domainSettings.${currentDomain}`,
+            ]);
+            const domainSettings =
+                result[`domainSettings.${currentDomain}`] || {};
 
-            // 檢查是否有當前域名的特定設置
             if (domainSettings) {
                 selectedModelIndex =
-                    selectedModelIndex ??
-                    domainSettings.selectedModelIndex;
+                    selectedModelIndex ?? domainSettings.selectedModelIndex;
                 selectPromptIndex =
-                    selectPromptIndex ??
-                    domainSettings.selectPromptIndex;
+                    selectPromptIndex ?? domainSettings.selectPromptIndex;
             }
 
             const response = await chrome.tabs.sendMessage(currentTab.id, {
                 action: 'getPageContent',
             });
 
-            if (response && response.content) {
+            let content = '';
+            switch (response.siteType) {
+                case ContentExtractor.SITE_TYPES.YOUTUBE:
+                    try {
+                        const transcript =
+                            await YoutubeTranscript.fetchTranscript(
+                                response.videoId
+                            );
+                        content = transcript
+                            .map((entry) => entry.text)
+                            .join(' ');
+                    } catch (error) {
+                        throw new Error(
+                            '無法獲取 YouTube 字幕。可能影片沒有字幕或字幕不可用。'
+                        );
+                    }
+                    break;
+
+                // 未來可以在這裡添加更多網站的處理邏輯
+                // case ContentExtractor.SITE_TYPES.MEDIUM:
+                //     content = await handleMediumContent(response);
+                //     break;
+
+                case ContentExtractor.SITE_TYPES.NORMAL:
+                    content = response.content;
+                    break;
+
+                default:
+                    throw new Error('不支援的網站類型');
+            }
+
+            if (content) {
                 await _summarize(
                     currentUrl,
                     currentTitle,
-                    response.content,
+                    content,
                     selectedModelIndex,
                     selectPromptIndex,
                     isRegenerate
                 );
             } else {
-                throw new Error('Invalid response');
+                throw new Error('無法獲取內容');
             }
         } catch (error) {
             handleError(error);
@@ -93,7 +126,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (response && response.error) {
                 if (response.error.includes('RateLimitExceeded')) {
-                    handleError(new Error('Content is too large for current model. Please try with a smaller text or a different model.'));
+                    handleError(
+                        new Error(
+                            'Content is too large for current model. Please try with a smaller text or a different model.'
+                        )
+                    );
                 } else {
                     handleError(new Error(response.error));
                 }
@@ -139,7 +176,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function handleError(error) {
-        let message = 'Something went wrong. Please refresh the page and try again.';
+        let message =
+            'Something went wrong. Please refresh the page and try again.';
         if (error instanceof Error) {
             message = error.message || message;
         } else if (typeof error === 'string') {
@@ -447,16 +485,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const domainSettingsResult = await getStorageData([
                     `domainSettings.${currentDomain}`,
                 ]);
-                let domainSettings = domainSettingsResult[`domainSettings.${currentDomain}`] || {};
+                let domainSettings =
+                    domainSettingsResult[`domainSettings.${currentDomain}`] ||
+                    {};
 
                 domainSettings = {
                     selectedModelIndex: selectedModelIndex,
                     selectPromptIndex: selectPromptIndex,
                     llmConfigName: selectedModel.name,
-                    promptName: selectedPrompt ? selectedPrompt.name : 'Default Prompt',
+                    promptName: selectedPrompt
+                        ? selectedPrompt.name
+                        : 'Default Prompt',
                 };
 
-                await setStorageData({ [`domainSettings.${currentDomain}`]: domainSettings });
+                await setStorageData({
+                    [`domainSettings.${currentDomain}`]: domainSettings,
+                });
 
                 showTooltip(`Default set for ${currentDomain}`);
             });
@@ -477,7 +521,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     function getBaseDomain(url) {
         try {
             const urlObj = new URL(url);
-            return urlObj.hostname
+            return urlObj.hostname;
         } catch (error) {
             console.error('Invalid URL:', url);
             return url;
