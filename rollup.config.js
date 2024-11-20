@@ -40,6 +40,7 @@ const pages = [
   { html: 'pages/history', js: 'pages/history' },
   { html: 'pages/options', js: 'pages/options' },
   { html: 'pages/prompts', js: 'pages/prompts' },
+  { html: 'sidepanel', js: 'sidepanel' },
 ];
 
 // Create configurations for all pages

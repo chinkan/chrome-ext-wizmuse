@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>WizMuse Side Panel</title>
+        <link rel="stylesheet" type="text/css" href="popup.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+        <script type="text/javascript" src="lib/drawdown/drawdown.js"></script>
+        <link rel="icon" type="image/png" href="images/icon128.png">
+    </head>
+    <body>
+        <div id="popup">
+            <div id="header">
+                <div id="logo"><img height="32" src="images/logo.svg" alt="WizMuse"></div>
+                <div id="toolbar">
+                    <button
+                        class="toolbar-button"
+                        id="regenerate-summary"
+                        title="Regenerate Summary"
+                    >
+                        <i class="material-icons">refresh</i>
+                    </button>
+                    <button
+                        class="toolbar-button"
+                        id="copy-summary"
+                        title="Copy Summary"
+                    >
+                        <i class="material-icons">content_copy</i>
+                    </button>
+                    <button
+                        class="toolbar-button"
+                        id="open-options"
+                        title="Settings"
+                    >
+                        <i class="material-icons">settings</i>
+                    </button>
+                </div>
+            </div>
+            <div id="regenerate-container" style="display: none"></div>
+            <div id="loading-indicator" class="loader" style="display: none">Loading...</div>
+            <div id="error-message" style="display: none; color: red"></div>
+            <div id="summary-container">
+                <div id="summary"></div>
+            </div>
+        </div>
+        <script type="module" src="sidepanel.min.js"></script>
+    </body>
+</html>
