@@ -6,11 +6,12 @@
 
 WizMuse is a browser extension that allows users to summarize web pages using various large language model (LLM) providers. The extension provides a user-friendly interface to extract key points and generate concise summaries of the content on any webpage.
 
-![WizMuse](/images/WizMuse1_s.jpg)
+![WizMuse](/public/images/WizMuse1_s.jpg)
 
 ## Features
 
 -   Summarize web pages with various LLM providers.
+-   Summarize YouTube video transcripts automatically.
 -   Customize the summary process with different models and prompts.
 -   Copy the summary to the clipboard.
 -   Open the options page to manage models and prompts.
@@ -58,16 +59,20 @@ Thanks for your contribution!
 
 ## TODO
 
--   [x] Implement the summarization functionality for the OpenAI provider.
--   [x] Implement the summarization functionality for the Anthropic provider.
--   [x] Implement the summarization functionality for the Groq provider.
--   [x] Implement the summarization functionality for the Ollama provider.
--   [x] Implement custom prompt
--   [x] Implement copy to clipboard
--   [ ] Implement the share to society functionality
--   [ ] Implement the Add to Notion functionality
--   [ ] Improve error handling and user feedback.
--   [ ] Enhance the UI for better user experience.
+- [x] Implement the summarization functionality for the OpenAI provider.
+- [x] Implement the summarization functionality for the Anthropic provider.
+- [x] Implement the summarization functionality for the Groq provider.
+- [x] Implement the summarization functionality for the Ollama provider.
+- [x] Implement custom prompt
+- [x] Implement copy to clipboard
+- [x] Add YouTube video transcript summarization support
+- [ ] Implement the share to society functionality
+- [ ] Implement the Add to Notion functionality
+- [ ] Improve error handling and user feedback.
+- [ ] Enhance the UI for better user experience.
+- [ ] Add support for more LLM providers
+- [ ] Implement custom prompt templates
+- [ ] Add support for more languages
 -   And more...
 
 ## License
@@ -78,6 +83,7 @@ This project is licensed under the GNU General Public License (GPL). You can fre
 
 Copyright (c) 2024 chinkan.ai
 
-## Special Thanks
+## Acknowledgments
 
+- [youtube-transcript](https://github.com/Kakulukian/youtube-transcript) - For providing the YouTube transcript extraction functionality.
 -   [Adamvleggett](https://github.com/adamvleggett) for his [drawdown](https://github.com/adamvleggett/drawdown) library.
