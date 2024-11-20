@@ -23,10 +23,17 @@ jobs:
               run: |
                   git clone https://github.com/adamvleggett/drawdown.git lib/drawdown
 
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build extension
+              run: npm run build
+
             - name: Pack extension
               run: |
-                  mkdir packed-extension
-                  zip -r packed-extension/extension.zip . -x "*.git*" "packed-extension/*" "*.github/*"
+                  mkdir -p packed-extension
+                  cd dist
+                  zip -r ../packed-extension/extension.zip .
 
             - name: Upload artifact
               uses: actions/upload-artifact@v4
