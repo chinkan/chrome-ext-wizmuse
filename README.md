@@ -6,7 +6,7 @@
 
 WizMuse is a browser extension that allows users to summarize web pages using various large language model (LLM) providers. The extension provides a user-friendly interface to extract key points and generate concise summaries of the content on any webpage.
 
-![WizMuse](/images/WizMuse1_s.jpg)
+![WizMuse](/public/images/WizMuse1_s.jpg)
 
 ## Features
 
