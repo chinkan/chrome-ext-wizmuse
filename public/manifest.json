@@ -2,8 +2,13 @@
     "manifest_version": 3,
     "name": "WizMuse",
     "version": "0.8.0",
-    "description": "WizMuse is a powerful web page summarization tool. Quickly extract core content from web pages to improve reading efficiency.",
-    "permissions": ["activeTab", "storage", "sidePanel"],
+    "description": "WizMuse is a powerful web page summarization and note-taking tool. Quickly extract and save content from web pages.",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "sidePanel",
+        "tabs"
+    ],
     "action": {
         "default_popup": "popup.html",
         "default_icon": {

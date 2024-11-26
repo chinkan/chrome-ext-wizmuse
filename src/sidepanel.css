@@ -1,0 +1,218 @@
+:root {
+  --primary-color: #3b82f6;
+  --text-gray-900: #111827;
+  --text-gray-600: #4b5563;
+  --text-gray-500: #6b7280;
+  --text-gray-400: #9ca3af;
+  --bg-gray-50: #f9fafb;
+  --border-gray-200: #e5e7eb;
+  --border-gray-100: #f3f4f6;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: white;
+  border-left: 1px solid var(--border-gray-200);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Top Toolbar */
+.toolbar {
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid var(--border-gray-200);
+  box-sizing: border-box;
+}
+
+.toolbar-top {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-gray-600);
+}
+
+.icon-button:hover {
+  color: var(--primary-color);
+}
+
+.icon-button.active {
+  color: var(--primary-color);
+}
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-gray-200);
+  border-radius: 0.5rem;
+  background-color: var(--bg-gray-50);
+  font-size: 0.875rem;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* Note List */
+.notes-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.note-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-gray-100);
+  cursor: pointer;
+}
+
+.note-item:hover {
+  background-color: var(--bg-gray-50);
+}
+
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.note-title {
+  font-weight: 500;
+  color: var(--text-gray-900);
+  margin: 0;
+}
+
+.note-excerpt {
+  font-size: 0.875rem;
+  color: var(--text-gray-500);
+  margin-bottom: 0.5rem;
+}
+
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-gray-400);
+}
+
+.note-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.note-meta .material-icons {
+  font-size: 16px;
+}
+
+.tag {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--bg-gray-50);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.note-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.delete-note {
+  color: var(--text-gray-400);
+}
+
+.delete-note:hover {
+  color: #ef4444;
+}
+
+/* Status Bar */
+.status-bar {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-gray-200);
+  font-size: 0.75rem;
+  color: var(--text-gray-500);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Loading and Error States */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--bg-gray-50);
+  border-bottom: 1px solid var(--border-gray-200);
+}
+
+.error-message {
+  padding: 8px;
+  color: #ef4444;
+  background-color: #fee2e2;
+  border-bottom: 1px solid #fecaca;
+}
+
+/* Grid View */
+.grid-view .note-item {
+  display: inline-block;
+  width: calc(50% - 2rem);
+  margin: 0.5rem;
+  border: 1px solid var(--border-gray-200);
+  border-radius: 0.5rem;
+}
+
+/* Icons */
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-sm {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Loading Animation */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotating {
+    animation: rotate 1s linear infinite;
+}
