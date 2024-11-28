@@ -166,4 +166,25 @@
         <select id="default-llm-config"></select>
     </div>
     <button id="save-default">Save Config</button>
+    <div class="settings-management">
+        <div class="settings-header" id="settings-header">
+            <h2>Settings Management</h2>
+            <button class="toggle-button" id="toggle-settings">
+                <span class="material-icons">expand_more</span>
+            </button>
+        </div>
+        <div class="settings-content" id="settings-content" style="display: none;">
+            <div class="settings-actions">
+                <button id="export-settings" class="settings-btn">
+                    <span class="material-icons">file_download</span>
+                    Export Settings
+                </button>
+                <button id="import-settings" class="settings-btn">
+                    <span class="material-icons">file_upload</span>
+                    Import Settings
+                </button>
+                <input type="file" id="settings-file-input" style="display: none;" accept=".json">
+            </div>
+        </div>
+    </div>
 </div>

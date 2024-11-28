@@ -1,3 +1,4 @@
+import './sidepanel.css'
 import { getStorageData, setStorageData } from './utils/storage.js';
 
 class NotesManager {

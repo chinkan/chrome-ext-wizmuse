@@ -1,3 +1,4 @@
+import './popup.css';
 import { getStorageData, setStorageData } from './utils/storage.js';
 
 document.addEventListener('DOMContentLoaded', async function () {

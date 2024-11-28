@@ -52,19 +52,21 @@ const createPageConfig = ({ html, js, css }) => ({
   },
   plugins: [
     ...commonPlugins,
-    // Handle CSS for this page
+    // Copy HTML file for this page
     postcss({
-      extract: `${css}.css`,
+      include: `src/${css}.css`,
+      extract: resolve(`dist/${css}.css`),
       minimize: production,
       sourceMap: !production,
+      modules: false,
+      inject: false,
     }),
-    // Copy HTML file for this page
     copy({
       targets: [
         {
           src: `src/${html}.html`,
           dest: `dist/${html.split('/')[0] === 'pages' ? 'pages' : ''}`,
-        },
+        }
       ],
       hook: 'writeBundle',
     }),
@@ -76,6 +78,31 @@ const createPageConfig = ({ html, js, css }) => ({
   watch: {
     clearScreen: false,
     include: ['src/**'],
+  },
+});
+
+// Create configuration for static assets
+const createCopyConfig = () => ({
+  input: 'src/background.js',
+  output: {
+    file: 'dist/background.js',
+    sourcemap: !production,
+  },
+  plugins: [
+    ...commonPlugins,
+    copy({
+      targets: [
+        // Copy manifest and images
+        { src: 'public/manifest.json', dest: 'dist' },
+        { src: 'public/images/*', dest: 'dist/images' },
+        { src: 'public/_locales/**/*', dest: 'dist/_locales' },
+      ],
+      hook: 'writeBundle',
+    }),
+  ],
+  watch: {
+    clearScreen: false,
+    include: ['public/**'],
   },
 });
 
@@ -110,30 +137,6 @@ const scriptConfigs = [
     },
   },
 ];
-
-// Create configuration for static assets
-const createCopyConfig = () => ({
-  input: 'src/background.js',
-  output: {
-    file: 'dist/background.js',
-    sourcemap: !production,
-  },
-  plugins: [
-    copy({
-      targets: [
-        // Copy manifest and images
-        { src: 'public/manifest.json', dest: 'dist' },
-        { src: 'public/images/*', dest: 'dist/images' },
-        { src: 'public/_locales/**/*', dest: 'dist/_locales' },
-      ],
-      hook: 'writeBundle',
-    }),
-  ],
-  watch: {
-    clearScreen: false,
-    include: ['public/**'],
-  },
-});
 
 // Combine all configurations
 const configs = [
