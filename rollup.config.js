@@ -96,6 +96,8 @@ const createCopyConfig = () => ({
         { src: 'public/manifest.json', dest: 'dist' },
         { src: 'public/images/*', dest: 'dist/images' },
         { src: 'public/_locales/**/*', dest: 'dist/_locales' },
+        // Copy drawdown library
+        { src: 'lib/drawdown/**/*', dest: 'dist/lib/drawdown' },
       ],
       hook: 'writeBundle',
     }),
