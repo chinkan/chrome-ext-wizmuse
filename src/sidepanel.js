@@ -1,12 +1,19 @@
 import "./sidepanel.css";
 import { getStorageData, setStorageData } from "./utils/storage.js";
+import  EasyMDE  from "easymde";
 
 class NotesManager {
   constructor() {
     this.viewMode = "list";
     this.notes = [];
+    this.setupElements();
     this.setupEventListeners();
     this.loadNotes();
+  }
+
+  setupElements() {
+    this.loadIndicator = document.getElementById("loading-indicator");
+    this.errorMessage = document.getElementById("error-message");
   }
 
   setupEventListeners() {
@@ -27,6 +34,15 @@ class NotesManager {
     document
       .getElementById("new-note")
       .addEventListener("click", () => this.createNewNote());
+
+    // Options button
+    document.getElementById("open-options").addEventListener("click", () => {
+      if (chrome.runtime.openOptionsPage) {
+        chrome.runtime.openOptionsPage();
+      } else {
+        window.open(chrome.runtime.getURL("options.html"));
+      }
+    });
   }
 
   async loadNotes() {
@@ -140,6 +156,8 @@ class NotesManager {
       const newNoteButton = document.getElementById("new-note");
       const originalIcon = newNoteButton.innerHTML;
       newNoteButton.innerHTML = '<i class="material-icons rotating">sync</i>';
+      this.loadIndicator.style.display = "flex";
+      this.errorMessage.style.display = "none";
 
       // Get summary
       let summary;
@@ -174,6 +192,9 @@ class NotesManager {
       // Restore button state on error
       const newNoteButton = document.getElementById("new-note");
       newNoteButton.innerHTML = '<i class="material-icons">add</i>';
+    }
+    finally {
+      this.loadIndicator.style.display = "none";
     }
   }
 
@@ -222,7 +243,6 @@ class NotesManager {
   }
 
   showNoteDetail(note) {
-    console.log("showNoteDetail", note);
 
     const detailDialog = document.createElement("dialog");
     detailDialog.className = "note-detail-dialog";
@@ -254,6 +274,19 @@ class NotesManager {
     const saveBtn = detailDialog.querySelector(".save-note");
     const titleElement = detailDialog.querySelector(".note-title");
     const contentElement = detailDialog.querySelector(".note-content");
+    contentElement.innerHTML="";
+    const contentInput = document.createElement("textarea");
+    contentInput.textContent = note.content;
+    contentElement.appendChild(contentInput);
+
+    const easyMDE = new EasyMDE({
+      element: contentInput,
+      parsingConfig: {
+        indentWithTabs: false,
+        smartIndent: true,
+        singleLineBreaks: false,
+      },
+    });
 
     closeBtn.addEventListener("click", () => {
       detailDialog.close();
@@ -264,11 +297,12 @@ class NotesManager {
       const updatedNote = {
         ...note,
         title: titleElement.textContent,
-        content: contentElement.textContent,
+        content: easyMDE.value(),
         updatedAt: new Date().toISOString(),
       };
 
       const noteIndex = this.notes.findIndex((n) => n.id === note.id);
+      console.log(updatedNote);
       if (noteIndex !== -1) {
         this.notes[noteIndex] = updatedNote;
         await setStorageData({ notes: this.notes });
@@ -277,10 +311,6 @@ class NotesManager {
         detailDialog.remove();
       }
     });
-
-    // Convert markdown to HTML for display
-    const markdownHtml = markdown(note.content);
-    contentElement.innerHTML = markdownHtml;
 
     detailDialog.showModal();
   }
