@@ -8,8 +8,13 @@
         "storage",
         "sidePanel",
         "tabs",
-        "unlimitedStorage"
+        "unlimitedStorage",
+        "identity"
     ],
+    "oauth2": {
+        "client_id": "151d872b-594c-80b5-9599-0037a4e95c8d",
+        "scopes": ["https://api.notion.com/v1/oauth/authorize"]
+    },
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
@@ -33,11 +38,15 @@
         "service_worker": "background.js",
         "type": "module"
     },
-    "host_permissions": ["<all_urls>"],
+    "host_permissions": [
+        "<all_urls>",
+        "https://api.notion.com/*"
+    ],
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
-    ]
+    ],
+    "key": "pkkbpmbapimdajbpfdccdaifnedeknlo"
 }

@@ -37,6 +37,7 @@ const pages = [
   { html: 'pages/history', js: 'pages/history', css: 'pages/history' },
   { html: 'pages/options', js: 'pages/options', css: 'pages/options' },
   { html: 'pages/prompts', js: 'pages/prompts', css: 'pages/prompts' },
+  { html: 'pages/settings', js: 'pages/settings', css: 'pages/settings' },
   { html: 'sidepanel', js: 'sidepanel', css: 'sidepanel' },
 ];
 

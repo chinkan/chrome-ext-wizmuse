@@ -4,9 +4,10 @@ import { options, initializeOptionsPage } from './pages/options.js';
 import { prompts, initializePromptsPage } from './pages/prompts.js';
 import { history, initializeHistoryPage } from './pages/history.js';
 import { domains, initializeDomainsPage } from './pages/domains.js';
+import { settings, initializeSettingsPage } from './pages/settings.js';
 import { getStorageData, setStorageData, getAllStorageData, removeStorageData } from './utils/storage.js';
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const contentDiv = document.getElementById('content');
     const menuItems = document.querySelectorAll('.menu-item');
 
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .querySelector(`[data-page="${pageId}"]`)
             .classList.add('active');
 
-        let pageContent;
+            let pageContent;
         try {
             switch (pageId) {
                 case 'about':
@@ -45,8 +46,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'history':
                     pageContent = await history();
                     break;
+                case 'settings':
+                    pageContent = await settings();;
+                    break;
                 default:
-                    pageContent = '<p>頁面不存在</p>';
+                    pageContent = '<p>Page not found</p>';
             }
 
             contentDiv.innerHTML = pageContent;
@@ -58,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     break;
                 case 'options':
                     initializeOptionsPage();
-                    initializeSettingsIO();
                     break;
                 case 'prompts':
                     initializePromptsPage();
@@ -69,12 +72,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'history':
                     initializeHistoryPage();
                     break;
-            }
-        } catch (error) {
+                case 'settings':
+                    initializeSettingsPage();
+                    break;
+                }
+            } catch (error) {
             console.error('加載頁面時出錯:', error);
             contentDiv.innerHTML = '<p>加載頁面時出錯</p>';
         }
     }
+
+    async function loadPage(pageName) {
+        try {
+            const response = await fetch(`pages/${pageName}.html`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const content = await response.text();
+            return content;
+
+            // Load and execute the page's JavaScript if it exists
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = `pages/${pageName}.js`;
+            document.body.appendChild(script);
+        } catch (error) {
+            console.error('Error loading page:', error);
+            contentDiv.innerHTML = '<p>Error loading page</p>';
+        }
+    }
+
+    // Handle menu item clicks
+    menuItems.forEach(item => {
+        item.addEventListener('click', async () => {
+            // Remove active class from all menu items
+            menuItems.forEach(menuItem => menuItem.classList.remove('active'));
+            
+            // Add active class to clicked item
+            item.classList.add('active');
+
+            // Load the corresponding page
+            const pageName = item.getAttribute('data-page');
+            await changePage(pageName);
+        });
+    });
+
+    // Load default page (about)
+    const defaultPage = 'about';
+    await changePage(defaultPage);
+    document.querySelector(`[data-page="${defaultPage}"]`).classList.add('active');
 });
 
 function checkFirstInstall(callback) {
@@ -108,64 +154,6 @@ function checkFirstInstall(callback) {
         } else {
             callback();
         }
-    });
-}
-
-async function initializeSettingsIO() {
-    const exportBtn = document.getElementById('export-settings');
-    const importBtn = document.getElementById('import-settings');
-    const importFile = document.getElementById('settings-file-input');
-    const settingsHeader = document.getElementById('settings-header');
-    const settingsContent = document.getElementById('settings-content');
-    const toggleButton = document.getElementById('toggle-settings');
-
-    if (!exportBtn || !importBtn || !importFile || !settingsHeader || !settingsContent || !toggleButton) return;
-
-    exportBtn.addEventListener('click', async () => {
-        try {
-            const settings = await getAllSettings();
-            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'wizmuse-settings.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error exporting settings:', error);
-            alert('Failed to export settings. Please try again.');
-        }
-    });
-
-    importBtn.addEventListener('click', () => {
-        importFile.click();
-    });
-
-    importFile.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const settings = JSON.parse(e.target.result);
-                await importSettings(settings);
-                alert('Settings imported successfully! The page will now reload.');
-                location.reload();
-            } catch (error) {
-                console.error('Error importing settings:', error);
-                alert('Failed to import settings. Please check the file format.');
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    settingsHeader.addEventListener('click', () => {
-        const isExpanded = settingsContent.style.display === 'block';
-        settingsContent.style.display = isExpanded ? 'none' : 'block';
-        toggleButton.classList.toggle('expanded', !isExpanded);
     });
 }
 
