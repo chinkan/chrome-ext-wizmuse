@@ -201,10 +201,10 @@ export function initializePromptsPage() {
     }
 
     function saveDefaultPrompt() {
+        console.log('Saving default prompt...', elements.defaultPromptSelect.value);
         const defaultPromptIndex = parseInt(elements.defaultPromptSelect.value);
         setStorageData({
-            defaultPromptIndex:
-                defaultPromptIndex === -1 ? undefined : defaultPromptIndex,
+            defaultPromptIndex: defaultPromptIndex,
         }).then(() => {
             alert('Prompt saved');
         });
