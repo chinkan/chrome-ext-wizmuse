@@ -28,20 +28,19 @@ export async function initializeSettingsPage() {
         notionDatabase: document.getElementById('notion-database'),
         autoSync: document.getElementById('auto-sync'),
         notionClientId: document.getElementById('notion-client-id'),
-        notionClientSecret: document.getElementById('notion-client-secret')
+        notionClientSecret: document.getElementById('notion-client-secret'),
+        notionToggle: document.getElementById('notion-toggle'),
+        notionCredentials: document.getElementById('notion-credentials')
     };
-
-    // Check if elements exist
-    for (const [key, element] of Object.entries(elements)) {
-        if (!element) {
-            console.error(`Element not found: ${key}`);
-            return;
-        }
-    }
 
     // Initialize event listeners and load settings
     await setupEventListeners(elements);
     await loadInitialSettings(elements);
+    
+    // Initialize Notion form state
+    const data = await chrome.storage.sync.get(['notionSettings']);
+    const isConnected = data.notionSettings?.connected || false;
+    updateNotionFormState(elements, !isConnected);
 }
 
 async function setupEventListeners(elements) {
@@ -83,6 +82,11 @@ async function setupEventListeners(elements) {
             alert('Failed to authenticate with Notion. Please try again.');
         }
     });
+
+    elements.notionToggle?.addEventListener('click', () => {
+        const isExpanded = elements.notionCredentials.classList.contains('expanded');
+        updateNotionFormState(elements, !isExpanded);
+    });
 }
 
 async function loadInitialSettings(elements) {
@@ -116,12 +120,10 @@ async function connectToNotion(elements, clientId, clientSecret) {
         const state = generateRandomString();
         const authUrl = `${NOTION_CONFIG.AUTH_URL}?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(NOTION_CONFIG.REDIRECT_URI)}&state=${state}`;
         
-        console.log('Starting OAuth flow with URL:', authUrl);
         const result = await chrome.identity.launchWebAuthFlow({
             url: authUrl,
             interactive: true
         });
-        console.log('OAuth flow completed with result:', result);
         
         const url = new URL(result);
         const code = url.searchParams.get('code');
@@ -132,11 +134,8 @@ async function connectToNotion(elements, clientId, clientSecret) {
         }
         
         if (code) {
-            console.log('Exchanging code for token...');
             const tokenData = await exchangeCodeForToken(code);
-            console.log('Token data received:', { ...tokenData, access_token: '[REDACTED]' });
             
-            // Save token data and update connection status
             const notionSettings = {
                 connected: true,
                 accessToken: tokenData.access_token,
@@ -147,18 +146,9 @@ async function connectToNotion(elements, clientId, clientSecret) {
                 autoSync: false
             };
             
-            console.log('Saving settings...', { ...notionSettings, accessToken: '[REDACTED]' });
-            
-            // Save using chrome.storage directly to ensure it's saved
             await chrome.storage.sync.set({ notionSettings });
             
-            // Verify the token was saved
             const savedData = await chrome.storage.sync.get(['notionSettings']);
-            console.log('Verified saved settings:', { 
-                ...savedData.notionSettings,
-                accessToken: savedData.notionSettings?.accessToken ? '[PRESENT]' : '[MISSING]' 
-            });
-            
             if (!savedData.notionSettings?.accessToken) {
                 throw new Error('Failed to save access token');
             }
@@ -176,14 +166,8 @@ async function connectToNotion(elements, clientId, clientSecret) {
 
 async function loadNotionDatabases() {
     try {
-        // Get settings directly from chrome.storage
         const data = await chrome.storage.sync.get(['notionSettings']);
         const settings = data.notionSettings;
-        
-        console.log('Current settings:', { 
-            ...settings,
-            accessToken: settings?.accessToken ? '[PRESENT]' : '[MISSING]' 
-        });
         
         if (!settings?.accessToken) {
             console.error('No access token found');
@@ -198,7 +182,6 @@ async function loadNotionDatabases() {
 
         elements.notionStatus.textContent = 'Loading databases...';
 
-        console.log('Fetching databases from Notion...');
         const response = await fetch(`${NOTION_CONFIG.API_URL}/search`, {
             method: 'POST',
             headers: {
@@ -220,13 +203,10 @@ async function loadNotionDatabases() {
         }
 
         const responseData = await response.json();
-        console.log('Notion databases response:', responseData);
 
         if (responseData.results && responseData.results.length > 0) {
-            // Clear existing options
             elements.notionDatabase.innerHTML = '';
             
-            // Add databases to select element
             responseData.results.forEach(db => {
                 const title = db.title[0]?.plain_text || 'Untitled';
                 const option = document.createElement('option');
@@ -235,16 +215,13 @@ async function loadNotionDatabases() {
                 elements.notionDatabase.appendChild(option);
             });
 
-            // Show the settings section
             elements.notionSettings.style.display = 'block';
 
-            // Save the selected database ID if none is selected
             if (!settings.selectedDatabaseId) {
                 settings.selectedDatabaseId = responseData.results[0].id;
                 await chrome.storage.sync.set({ notionSettings: settings });
             }
 
-            // Set the previously selected database
             if (settings.selectedDatabaseId) {
                 elements.notionDatabase.value = settings.selectedDatabaseId;
             }
@@ -280,7 +257,6 @@ async function saveNotionToken(tokenData) {
         };
         
         await chrome.storage.sync.set({ notionSettings: updatedSettings });
-        console.log('Token saved successfully');
         
         // Verify the save
         const verifySettings = await chrome.storage.sync.get(['notionSettings']);
@@ -299,10 +275,10 @@ async function loadNotionSettings() {
         connected: false,
         autoSync: false
     };
-    updateNotionUI(settings);
+    await updateNotionUI(settings);
 }
 
-function updateNotionUI(settings) {
+async function updateNotionUI(settings) {
     const elements = {
         notionStatus: document.getElementById('notion-status'),
         notionSettings: document.getElementById('notion-settings'),
@@ -313,6 +289,10 @@ function updateNotionUI(settings) {
     elements.notionStatus.className = `connection-status ${settings.connected ? 'connected' : ''}`;
     elements.notionSettings.style.display = settings.connected ? 'block' : 'none';
     elements.autoSync.checked = settings.autoSync;
+
+    if(settings.connected) {
+        await loadNotionDatabases();
+    }
 }
 
 async function handleNotionConnect() {
@@ -332,8 +312,6 @@ async function handleNotionConnect() {
         authUrl.searchParams.set('response_type', 'code');
         authUrl.searchParams.set('owner', 'user');
 
-        console.log('Starting OAuth flow with URL:', authUrl.toString());
-
         const result = await chrome.identity.launchWebAuthFlow({
             url: authUrl.toString(),
             interactive: true
@@ -342,8 +320,6 @@ async function handleNotionConnect() {
         if (!result) {
             throw new Error('No response from auth flow');
         }
-
-        console.log('OAuth flow completed with result:', result);
 
         const resultUrl = new URL(result);
         const code = resultUrl.searchParams.get('code');
@@ -436,11 +412,35 @@ async function saveNotionSettings() {
 function updateNotionConnectionStatus(connected) {
     const elements = {
         notionStatus: document.getElementById('notion-status'),
-        notionSettings: document.getElementById('notion-settings')
+        notionSettings: document.getElementById('notion-settings'),
+        notionToggle: document.getElementById('notion-toggle'),
+        notionCredentials: document.getElementById('notion-credentials')
     };
-    elements.notionStatus.textContent = connected ? 'Connected' : 'Not Connected';
-    elements.notionStatus.className = `connection-status ${connected ? 'connected' : ''}`;
-    elements.notionSettings.style.display = connected ? 'block' : 'none';
+
+    if (connected) {
+        elements.notionStatus.textContent = 'Connected to Notion';
+        elements.notionStatus.classList.remove('error');
+        elements.notionStatus.classList.add('success');
+        updateNotionFormState(elements, false); // Collapse when connected
+    } else {
+        elements.notionStatus.textContent = 'Not connected to Notion';
+        elements.notionStatus.classList.remove('success');
+        updateNotionFormState(elements, true); // Expand when not connected
+    }
+}
+
+function updateNotionFormState(elements, expanded) {
+    if (expanded) {
+        elements.notionCredentials.classList.remove('collapsed');
+        elements.notionCredentials.classList.add('expanded');
+        elements.notionToggle.classList.add('expanded');
+        console.log("expanded...");
+    } else {
+        elements.notionCredentials.classList.remove('expanded');
+        elements.notionCredentials.classList.add('collapsed');
+        elements.notionToggle.classList.remove('expanded');
+        console.log("collapsed...");
+    }
 }
 
 // Helper functions
@@ -455,14 +455,14 @@ async function getAllSettings() {
     ]);
 
     return {
-        domains,
-        prompts,
+        ...domains,
+        ...prompts,
         options: {
-            llmConfigs
+            ...llmConfigs,
         },
-        selectedLLMIndex,
-        language,
-        defaultPromptIndex
+        ...selectedLLMIndex,
+        ...language,
+        ...defaultPromptIndex
     };
 }
 
@@ -525,13 +525,6 @@ function handleExport() {
         elements.exportBtn.disabled = false;
     });
 }
-
-// Initialize settings page when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeSettingsPage().catch(error => {
-        console.error('Failed to initialize settings page:', error);
-    });
-});
 
 // Add event listener for database selection
 document.addEventListener('DOMContentLoaded', () => {

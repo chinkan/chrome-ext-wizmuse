@@ -29,7 +29,11 @@
                     <div id="notion-status" class="connection-status">
                         Not Connected
                     </div>
-                    <div class="notion-credentials">
+                    <div id="notion-toggle" class="notion-toggle">
+                        <span class="material-icons">expand_more</span>
+                        <span>Notion Credentials</span>
+                    </div>
+                    <div id="notion-credentials" class="notion-credentials collapsed">
                         <div class="form-group">
                             <label for="notion-client-id">Client ID:</label>
                             <input type="text" id="notion-client-id" class="form-input" placeholder="Enter your Notion Client ID">
@@ -38,8 +42,8 @@
                             <label for="notion-client-secret">Client Secret:</label>
                             <input type="password" id="notion-client-secret" class="form-input" placeholder="Enter your Notion Client Secret">
                         </div>
+                        <button id="connect-notion" class="primary-button">Connect to Notion</button>
                     </div>
-                    <button id="connect-notion" class="primary-button">Connect to Notion</button>
                 </div>
             </div>
             <div id="notion-settings" style="display: none;">
