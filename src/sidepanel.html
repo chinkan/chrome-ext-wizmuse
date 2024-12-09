@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WizMuse Notes</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css"
+    />
+    <script type="text/javascript" src="lib/drawdown/drawdown.js"></script>
+  </head>
+  <body>
+    <div class="side-panel">
+      <!-- Top Toolbar -->
+      <!-- Loading Indicator and Error Message -->
+      <div
+        id="loading-indicator"
+        class="loading-indicator"
+        style="display: none"
+      >
+        <i class="material-icons rotating">refresh</i>
+        <span>Generating summary...</span>
+      </div>
+      <div id="error-message" class="error-message" style="display: none"></div>
+      <div class="toolbar">
+        <div class="toolbar-top">
+          <div class="toolbar-actions">
+            <button class="icon-button" id="new-note" title="New Note">
+              <i class="material-icons">add</i>
+            </button>
+            <button class="icon-button" id="open-options" title="Options">
+              <i class="material-icons">settings</i>
+            </button>
+          </div>
+          <div class="toolbar-actions">
+            <button class="icon-button active" id="list-view" title="List View">
+              <i class="material-icons">view_list</i>
+            </button>
+            <button class="icon-button" id="grid-view" title="Grid View">
+              <i class="material-icons">grid_view</i>
+            </button>
+          </div>
+        </div>
+        <div class="search-bar">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search notes..."
+            id="search-input"
+          />
+        </div>
+      </div>
+
+      <!-- Notes Container -->
+      <div class="notes-container" id="notes-container">
+        <!-- Notes will be dynamically inserted here -->
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span id="notes-count">0 notes</span>
+        <span id="last-sync">Last sync: Just now</span>
+      </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="note-template">
+      <div class="note-item">
+        <div class="note-header">
+          <h3 class="note-title"></h3>
+          <div class="note-actions">
+            <button class="icon-button delete-note" title="Delete Note">
+              <i class="material-icons">delete</i>
+            </button>
+          </div>
+        </div>
+        <div class="note-content"></div>
+        <div class="note-tags"></div>
+      </div>
+    </template>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

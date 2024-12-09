@@ -60,6 +60,14 @@ chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.runtime.openOptionsPage();
     }
+    // Check if side panel is supported
+    if (chrome.sidePanel) {
+        // Side panel is supported, set it up
+        chrome.sidePanel.setOptions({
+            enabled: true,
+            path: 'sidepanel.html'
+        });
+    }
     if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
         var manifestData = chrome.runtime.getManifest();
         getStorageData(['lastVersion']).then((result) => {
@@ -93,5 +101,13 @@ chrome.runtime.onInstalled.addListener(function (details) {
                 setStorageData({ lastVersion: manifestData.version });
             }
         });
+    }
+});
+
+// Handle browser action click
+chrome.action.onClicked.addListener((tab) => {
+    // If side panel is supported, toggle it
+    if (chrome.sidePanel) {
+        chrome.sidePanel.toggle();
     }
 });
