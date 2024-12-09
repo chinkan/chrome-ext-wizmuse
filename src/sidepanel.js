@@ -1,6 +1,11 @@
 import "./sidepanel.css";
 import { getStorageData, setStorageData } from "./utils/storage.js";
-import  EasyMDE  from "easymde";
+import EasyMDE from "easymde";
+
+const NOTION_CONFIG = {
+  API_URL: "https://api.notion.com/v1",
+  API_VERSION: "2022-02-22",
+};
 
 class NotesManager {
   constructor() {
@@ -9,11 +14,14 @@ class NotesManager {
     this.setupElements();
     this.setupEventListeners();
     this.loadNotes();
+    this.initializeSync();
   }
 
   setupElements() {
     this.loadIndicator = document.getElementById("loading-indicator");
     this.errorMessage = document.getElementById("error-message");
+    this.lastSyncElement = document.getElementById("last-sync");
+    this.syncButton = document.getElementById("sync-now");
   }
 
   setupEventListeners() {
@@ -41,6 +49,16 @@ class NotesManager {
         chrome.runtime.openOptionsPage();
       } else {
         window.open(chrome.runtime.getURL("options.html"));
+      }
+    });
+
+    // Sync button
+    this.syncButton?.addEventListener("click", () => this.syncToNotion());
+
+    // Auto-sync setup
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync' && changes.notes) {
+        this.scheduleSync();
       }
     });
   }
@@ -337,6 +355,165 @@ class NotesManager {
   async openNote(note) {
     if (note.url) {
       await chrome.tabs.update({ url: note.url });
+    }
+  }
+
+  async initializeSync() {
+    // Load last sync time
+    const { lastSync } = await getStorageData(['lastSync']);
+    this.updateSyncStatus(lastSync);
+
+    // Schedule initial sync
+    this.scheduleSync();
+  }
+
+  updateSyncStatus(lastSync) {
+    if (!lastSync) {
+      this.lastSyncElement.textContent = 'Last sync: Never';
+    } else {
+      const lastSyncDate = new Date(lastSync);
+      this.lastSyncElement.textContent = `Last sync: ${lastSyncDate.toLocaleString()}`;
+    }
+  }
+
+  async scheduleSync() {
+    const { notionSettings } = await getStorageData(['notionSettings']);
+    if (!notionSettings?.connected || !notionSettings?.autoSync) {
+      return;
+    }
+
+    // Clear any existing sync timer
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer);
+    }
+
+    // Schedule next sync in 5 minutes
+    this.syncTimer = setTimeout(() => this.syncToNotion(), 5 * 60 * 1000);
+  }
+
+  async syncToNotion() {
+    try {
+      const { notionSettings, notionDatabaseId } = await getStorageData([
+        'notionSettings',
+        'notionDatabaseId'
+      ]);
+
+      console.log('Sync settings:', { notionSettings, notionDatabaseId });
+
+      if (!notionSettings?.connected || !notionDatabaseId) {
+        throw new Error('Notion not connected or database not selected');
+      }
+
+      this.syncButton.querySelector('i').classList.add('rotating');
+      
+      // Fetch existing pages in the database
+      const existingPages = await this.fetchNotionPages(notionSettings.accessToken, notionDatabaseId);
+      console.log('Existing pages:', existingPages);
+      const existingUrls = new Set(existingPages.map(page => page.properties?.URL?.url || ''));
+      console.log('Current notes to sync:', this.notes);
+
+      // Sync new or updated notes
+      for (const note of this.notes) {
+        if (!existingUrls.has(note.url)) {
+          console.log('Syncing note:', note);
+          try {
+            await this.createNotionPage(notionSettings.accessToken, notionDatabaseId, note);
+          } catch (error) {
+            console.error('Error creating page for note:', note, error);
+          }
+        }
+      }
+
+      // Update last sync time
+      const lastSync = new Date().toISOString();
+      await setStorageData({ lastSync });
+      this.updateSyncStatus(lastSync);
+
+    } catch (error) {
+      console.error('Error syncing to Notion:', error);
+      this.errorMessage.textContent = 'Failed to sync with Notion: ' + error.message;
+      this.errorMessage.style.display = 'block';
+      setTimeout(() => {
+        this.errorMessage.style.display = 'none';
+      }, 3000);
+    } finally {
+      this.syncButton.querySelector('i').classList.remove('rotating');
+    }
+  }
+
+  async fetchNotionPages(token, databaseId) {
+    try {
+      console.log('Fetching pages with token:', token, 'database:', databaseId);
+      const response = await fetch(`${NOTION_CONFIG.API_URL}/databases/${databaseId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': NOTION_CONFIG.API_VERSION
+        },
+        body: JSON.stringify({
+          page_size: 100
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Notion API error:', error);
+        throw new Error(`Failed to fetch Notion pages: ${error.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.results;
+    } catch (error) {
+      console.error('Error fetching Notion pages:', error);
+      throw error;
+    }
+  }
+
+  async createNotionPage(token, databaseId, note) {
+    try {
+      console.log('Creating page with token:', token, 'database:', databaseId, 'note:', note);
+      const response = await fetch(`${NOTION_CONFIG.API_URL}/pages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': NOTION_CONFIG.API_VERSION
+        },
+        body: JSON.stringify({
+          parent: { database_id: databaseId },
+          properties: {
+            Title: {
+              title: [{ text: { content: note.title } }]
+            },
+            Content: {
+              rich_text: [{ text: { content: note.content || note.excerpt || '' } }]
+            },
+            URL: {
+              url: note.url
+            },
+            Tags: {
+              multi_select: note.tags.map(tag => ({ name: tag }))
+            },
+            CreatedAt: {
+              date: { start: note.createdAt || new Date().toISOString() }
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Notion API error:', error);
+        throw new Error(`Failed to create Notion page: ${error.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Created Notion page:', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating Notion page:', error);
+      throw error;
     }
   }
 }

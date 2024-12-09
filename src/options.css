@@ -78,18 +78,6 @@ button:hover {
     margin-right: 8px
 }
 
-#prompt-form-container,td,th {
-    border: 1px solid var(--border-color)
-}
-
-#prompt-form-container {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,.1)
-}
-
 #prompt-form .form-group {
     margin-bottom: 15px
 }
@@ -284,7 +272,7 @@ tbody tr:hover,th {
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,.1);
-    width: 90%;
+    width: 60vh;
     max-height: 90vh;
     overflow-y: auto
 }
@@ -376,16 +364,48 @@ tbody tr:hover,th {
 }
 
 #llm-provider-grid {
-    grid-template-columns: repeat(2,1fr);
-    margin-bottom: 20px
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+#llm-provider-grid .provider-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#llm-provider-grid .provider-option:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.provider-options {
+    display: none;
 }
 
 .provider-option {
-    border: 1px solid #ddd
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
 }
 
-#toggle-advanced-settings:hover {
-    background-color: var(--hover-color)
+.provider-option:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 .provider-option img {
@@ -568,18 +588,6 @@ input:checked+.slider:before {
 #domains-table th {
     background-color: var(--secondary-color);
     font-weight: 700
-}
-
-#domain-form-container,.settings-io {
-    background-color: #f8f9fa;
-    border-radius: 8px
-}
-
-#domain-form-container {
-    border: 1px solid var(--border-color);
-    padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,.1)
 }
 
 #domain-form .button-group {
@@ -1022,13 +1030,6 @@ tbody tr:last-child td {
     margin: 0 auto
 }
 
-#llm-provider-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
-    gap: 16px;
-    margin-bottom: 1.5rem
-}
-
 #toggle-advanced-settings,.provider-option {
     cursor: pointer;
     display: flex;
@@ -1040,7 +1041,7 @@ tbody tr:last-child td {
     padding: 16px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    transition: all .2s
+    transition: all 0.2s
 }
 
 .provider-option:hover {
