@@ -21,7 +21,6 @@ class NotesManager {
     this.loadIndicator = document.getElementById("loading-indicator");
     this.errorMessage = document.getElementById("error-message");
     this.lastSyncElement = document.getElementById("last-sync");
-    this.syncButton = document.getElementById("sync-now");
   }
 
   setupEventListeners() {
@@ -51,9 +50,6 @@ class NotesManager {
         window.open(chrome.runtime.getURL("options.html"));
       }
     });
-
-    // Sync button
-    this.syncButton?.addEventListener("click", () => this.syncToNotion());
 
     // Auto-sync setup
     chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -220,6 +216,7 @@ class NotesManager {
     try {
       await setStorageData({ notes: this.notes });
       this.updateLastSync();
+      this.scheduleSync();
     } catch (error) {
       console.error("Error saving notes:", error);
     }
@@ -378,7 +375,7 @@ class NotesManager {
 
   async scheduleSync() {
     const { notionSettings } = await getStorageData(['notionSettings']);
-    if (!notionSettings?.connected || !notionSettings?.autoSync) {
+    if (!notionSettings?.connected) {
       return;
     }
 
@@ -387,8 +384,8 @@ class NotesManager {
       clearTimeout(this.syncTimer);
     }
 
-    // Schedule next sync in 5 minutes
-    this.syncTimer = setTimeout(() => this.syncToNotion(), 5 * 60 * 1000);
+    // Schedule next sync in 30 seconds
+    this.syncTimer = setTimeout(() => this.syncToNotion(), 30 * 1000);
   }
 
   async syncToNotion() {
@@ -404,8 +401,6 @@ class NotesManager {
         throw new Error('Notion not connected or database not selected');
       }
 
-      this.syncButton.querySelector('i').classList.add('rotating');
-      
       // Fetch existing pages in the database
       const existingPages = await this.fetchNotionPages(notionSettings.accessToken, notionDatabaseId);
       console.log('Existing pages:', existingPages);
@@ -436,8 +431,6 @@ class NotesManager {
       setTimeout(() => {
         this.errorMessage.style.display = 'none';
       }, 3000);
-    } finally {
-      this.syncButton.querySelector('i').classList.remove('rotating');
     }
   }
 
