@@ -1,86 +1,106 @@
 import "./sidepanel.css";
-import { getStorageData, setStorageData } from "./utils/storage.js";
+import { getStorageData, removeStorageData, getAllStorageData, setStorageData } from "./utils/storage.js";
 import EasyMDE from "easymde";
+import {NOTION_CONFIG} from "./config/notion.js";
 
-const NOTION_CONFIG = {
-  API_URL: "https://api.notion.com/v1",
-  API_VERSION: "2022-02-22",
-};
 
 class NotesManager {
   constructor() {
     this.viewMode = "list";
     this.notes = [];
+    this.loadConfig();
     this.setupElements();
     this.setupEventListeners();
     this.loadNotes();
     this.initializeSync();
   }
 
+  loadConfig(){
+    this.config = NOTION_CONFIG;
+  }
+
   setupElements() {
     this.loadIndicator = document.getElementById("loading-indicator");
     this.errorMessage = document.getElementById("error-message");
     this.lastSyncElement = document.getElementById("last-sync");
+    this.notesListView= document.getElementById("list-view");
+    this.notesGridView = document.getElementById("grid-view");
+    this.searchInput = document.getElementById("search-input");
+    this.newNoteButton = document.getElementById("new-note");
+    this.optionsButton = document.getElementById("open-options");
+    this.notesContainer = document.getElementById("notes-container");
+    this.notesTemplate = document.getElementById("note-template");
+    this.notesCount = document.getElementById("notes-count");
   }
 
   setupEventListeners() {
     // View mode toggles
-    document
-      .getElementById("list-view")
-      .addEventListener("click", () => this.setViewMode("list"));
-    document
-      .getElementById("grid-view")
-      .addEventListener("click", () => this.setViewMode("grid"));
+    this.notesListView.addEventListener("click", () => this.setViewMode("list"));
+    this.notesGridView.addEventListener("click", () => this.setViewMode("grid"));
 
     // Search functionality
-    document
-      .getElementById("search-input")
-      .addEventListener("input", (e) => this.handleSearch(e.target.value));
+    this.searchInput.addEventListener("input", (e) => this.handleSearch(e.target.value));
 
     // New note button
-    document
-      .getElementById("new-note")
-      .addEventListener("click", () => this.createNewNote());
+    this.newNoteButton.addEventListener("click", () => this.createNewNote());
 
     // Options button
-    document.getElementById("open-options").addEventListener("click", () => {
+    this.optionsButton.addEventListener("click", () => {
       if (chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
       } else {
         window.open(chrome.runtime.getURL("options.html"));
       }
     });
+  }
 
-    // Auto-sync setup
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'sync' && changes.notes) {
-        this.scheduleSync();
-      }
-    });
+  showError(message, duration = 3000) {
+    this.errorMessage.textContent = message;
+    this.errorMessage.style.display = "block";
+    setTimeout(() => {
+      this.errorMessage.style.display = "none";
+    }, duration);
+  }
+
+  showLoading(show = true) {
+    this.loadIndicator.style.display = show ? "flex" : "none";
+    const newNoteButton = document.getElementById("new-note");
+    if (show) {
+      this.originalButtonIcon = newNoteButton.innerHTML;
+      newNoteButton.innerHTML = '<i class="material-icons rotating">sync</i>';
+    } else if (this.originalButtonIcon) {
+      newNoteButton.innerHTML = this.originalButtonIcon;
+    }
   }
 
   async loadNotes() {
     try {
-      const result = await getStorageData(["notes"]);
-      this.notes = result.notes || [];
+      const result = await getAllStorageData();
+      // Filter for notes (excluding histories and settings)
+      this.notes = Object.entries(result)
+        .filter(([key]) => key.startsWith('notes.'))
+        .map(([_, note]) => note)
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      console.log('Loaded notes:', this.notes);
+      
       this.renderNotes();
       this.updateNotesCount();
     } catch (error) {
-      console.error("Error loading notes:", error);
+      console.error('Error loading notes:', error);
+      this.showError('Failed to load notes');
+      throw error;
     }
   }
 
   setViewMode(mode) {
     this.viewMode = mode;
-    const container = document.getElementById("notes-container");
-    container.className = `notes-container ${mode}-view`;
+    this.notesContainer.className = `notes-container ${mode}-view`;
 
     // Update active state of view buttons
-    document
-      .getElementById("list-view")
+    this.notesListView
       .classList.toggle("active", mode === "list");
-    document
-      .getElementById("grid-view")
+    this.notesGridView
       .classList.toggle("active", mode === "grid");
   }
 
@@ -95,7 +115,7 @@ class NotesManager {
   }
 
   async summarizeWebsite(url, title) {
-    try {
+    try {    
       // Get the current domain settings
       const currentDomain = new URL(url).hostname;
       const result = await getStorageData([`domainSettings.${currentDomain}`]);
@@ -106,6 +126,12 @@ class NotesManager {
         active: true,
         currentWindow: true,
       });
+
+      if (!tab) {
+        throw new Error('No active tab found');
+      }
+
+      // Get page content
       const contentResponse = await chrome.tabs.sendMessage(tab.id, {
         action: "getPageContent",
       });
@@ -126,23 +152,52 @@ class NotesManager {
       }
 
       if (response && response.summary) {
-        // Save to history
-        const key = `histories.${url}`;
+        const tags = await this.generateTags(response.summary);
+
+        console.log("Generated tags:", tags);
+
+        const timestamp = Date.now();
+        const noteKey = `notes.${timestamp}`;
+        const noteData = {
+          key: noteKey,
+          id: timestamp,
+          url: url,
+          title: title,
+          content: response.summary,
+          tags: tags,
+          timestamp: timestamp,
+          promptName: response.promptName,
+          providerName: response.providerName,
+          type: 'summary'
+        };
+        
         await setStorageData({
-          [key]: {
-            summary: response.summary,
-            title: title,
-            timestamp: Date.now(),
-            promptName: response.promptName,
-            providerName: response.providerName,
-          },
+          [noteKey]: noteData
+        });
+
+        // Also save to history
+        const historyKey = `histories.${url}`;
+        const historyData = {
+          summary: response.summary,
+          title: title,
+          timestamp: timestamp,
+          promptName: response.promptName,
+          providerName: response.providerName
+        };
+        await setStorageData({
+          [historyKey]: historyData
         });
         return response.summary;
       }
 
       throw new Error("Invalid summary response");
     } catch (error) {
-      console.error("Error summarizing website:", error);
+      console.error("Error summarizing website:", {
+        message: error.message,
+        stack: error.stack,
+        url: url,
+        title: title
+      });
       throw error;
     }
   }
@@ -161,19 +216,20 @@ class NotesManager {
 
   async createNewNote() {
     try {
+      this.showLoading(true);
+      this.errorMessage.style.display = "none";
+
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       });
 
-      // Show loading state
-      const newNoteButton = document.getElementById("new-note");
-      const originalIcon = newNoteButton.innerHTML;
-      newNoteButton.innerHTML = '<i class="material-icons rotating">sync</i>';
-      this.loadIndicator.style.display = "flex";
-      this.errorMessage.style.display = "none";
+      if (!tab) {
+        this.showError("No active tab found, please try to refresh the page.");
+        this.showLoading(false);
+        return;
+      }
 
-      // Get summary
       let summary;
       try {
         summary = await this.summarizeWebsite(tab.url, tab.title);
@@ -182,53 +238,51 @@ class NotesManager {
         summary = "Failed to generate summary. Click to add content...";
       }
 
-      const newNote = {
-        id: Date.now(),
-        title: tab.title || "New Note",
-        date: new Date().toISOString().split("T")[0],
-        tags: [],
-        source: new URL(tab.url).hostname,
-        excerpt: summary,
-        content: summary,
-        url: tab.url,
-        timestamp: Date.now(),
-      };
-
-      this.notes.unshift(newNote);
-      await this.saveNotes();
-      this.renderNotes();
-      this.updateNotesCount();
-
-      // Restore button state
-      newNoteButton.innerHTML = originalIcon;
+      await this.loadNotes(); // Reload notes after creating a new one
+      return summary;
     } catch (error) {
-      console.error("Error creating new note:", error);
-      // Restore button state on error
-      const newNoteButton = document.getElementById("new-note");
-      newNoteButton.innerHTML = '<i class="material-icons">add</i>';
-    }
-    finally {
-      this.loadIndicator.style.display = "none";
+      console.error('Error creating new note:', error);
+      this.showError('Failed to create new note');
+      throw error;
+    } finally {
+      this.showLoading(false);
     }
   }
 
-  async saveNotes() {
+  async deleteNote(noteId) {
     try {
-      await setStorageData({ notes: this.notes });
+      const confirmDelete = confirm("Are you sure you want to delete this note?");
+      if (!confirmDelete) return;
+
+      const noteKey = `notes.${noteId}`;
+      await removeStorageData(noteKey);
+      await this.loadNotes(); // Reload notes after deletion
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      this.showError('Failed to delete note');
+      throw error;
+    }
+  }
+
+  async saveNotes(note) {
+    try {
+      await setStorageData({ [note.key]: note });
       this.updateLastSync();
       this.scheduleSync();
     } catch (error) {
       console.error("Error saving notes:", error);
+      this.showError("Failed to save notes");
+      setTimeout(() => {
+        this.errorMessage.style.display = "none";
+      }, 3000);
     }
   }
 
   renderNotes(notesToRender = this.notes) {
-    const container = document.getElementById("notes-container");
-    container.innerHTML = "";
-    const template = document.getElementById("note-template");
+    this.notesContainer.innerHTML = "";
 
     notesToRender.forEach((note) => {
-      const noteElement = template.content
+      const noteElement = this.notesTemplate.content
         .cloneNode(true)
         .querySelector(".note-item");
       const plainText = note.content.replace(/[#*`_~\[\]]/g, ""); // Remove markdown syntax
@@ -243,6 +297,13 @@ class NotesManager {
       // Add click event for showing detail view
       noteElement.addEventListener("click", () => this.showNoteDetail(note));
 
+      // Add delete button click handler
+      const deleteButton = noteElement.querySelector(".delete-note");
+      deleteButton.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent event from bubbling up to parent
+        this.deleteNote(note.id);
+      });
+
       if (note.tags && note.tags.length) {
         const tagsContainer = noteElement.querySelector(".note-tags");
         note.tags.forEach((tag) => {
@@ -253,7 +314,7 @@ class NotesManager {
         });
       }
 
-      container.appendChild(noteElement);
+      this.notesContainer.appendChild(noteElement);
     });
   }
 
@@ -320,7 +381,7 @@ class NotesManager {
       console.log(updatedNote);
       if (noteIndex !== -1) {
         this.notes[noteIndex] = updatedNote;
-        await setStorageData({ notes: this.notes });
+        await this.saveNotes(this.notes[noteIndex]);
         this.renderNotes();
         detailDialog.close();
         detailDialog.remove();
@@ -330,23 +391,38 @@ class NotesManager {
     detailDialog.showModal();
   }
 
-  async deleteNote(noteId) {
-    if (confirm("Are you sure you want to delete this note?")) {
-      this.notes = this.notes.filter((note) => note.id !== noteId);
-      await this.saveNotes();
-      this.renderNotes();
-      this.updateNotesCount();
+  async updateNote(noteId, updates) {
+    try {
+      const noteKey = `notes.${noteId}`;
+      const result = await getStorageData([noteKey]);
+      const note = result[noteKey];
+      
+      if (!note) {
+        throw new Error('Note not found');
+      }
+
+      const updatedNote = {
+        ...note,
+        ...updates,
+        key: noteKey,
+        timestamp: Date.now() // Update timestamp on edit
+      };
+
+      await setStorageData({
+        [noteKey]: updatedNote
+      });
+    } catch (error) {
+      console.error('Error updating note:', error);
+      throw error;
     }
   }
 
   updateNotesCount() {
-    document.getElementById(
-      "notes-count"
-    ).textContent = `${this.notes.length} notes`;
+    this.notesCount.textContent = `${this.notes.length} notes`;
   }
 
   updateLastSync() {
-    document.getElementById("last-sync").textContent = "Last sync: Just now";
+    this.lastSyncElement.textContent = "Last sync: Just now";
   }
 
   async openNote(note) {
@@ -375,7 +451,8 @@ class NotesManager {
 
   async scheduleSync() {
     const { notionSettings } = await getStorageData(['notionSettings']);
-    if (!notionSettings?.connected) {
+    console.log(notionSettings);
+    if (!notionSettings?.connected && !notionSettings?.autoSync) {
       return;
     }
 
@@ -390,123 +467,144 @@ class NotesManager {
 
   async syncToNotion() {
     try {
-      const { notionSettings, notionDatabaseId } = await getStorageData([
-        'notionSettings',
-        'notionDatabaseId'
-      ]);
-
-      console.log('Sync settings:', { notionSettings, notionDatabaseId });
-
-      if (!notionSettings?.connected || !notionDatabaseId) {
-        throw new Error('Notion not connected or database not selected');
+      // Get Notion settings
+      const config = await getStorageData(['notionSettings']);
+      const { notionSettings } = config;
+      
+      if (!notionSettings || !notionSettings.connected || !notionSettings.selectedDatabaseId) {
+        throw new Error('Notion configuration is missing. Please set up Notion integration first.');
       }
 
-      // Fetch existing pages in the database
-      const existingPages = await this.fetchNotionPages(notionSettings.accessToken, notionDatabaseId);
-      console.log('Existing pages:', existingPages);
-      const existingUrls = new Set(existingPages.map(page => page.properties?.URL?.url || ''));
-      console.log('Current notes to sync:', this.notes);
+      // Get notes that need syncing (created or updated after last sync)
+      const lastSync = await getStorageData(['lastSync']);
+      const lastSyncTime = new Date(lastSync?.lastSync || 0).getTime();
+      
+      const notesToSync = this.notes.filter(note => {
+        const noteCreatedTime = new Date(note.timestamp).getTime();
+        return noteCreatedTime > lastSyncTime || note.timestamp > lastSyncTime;
+      });
 
-      // Sync new or updated notes
-      for (const note of this.notes) {
-        if (!existingUrls.has(note.url)) {
-          console.log('Syncing note:', note);
-          try {
-            await this.createNotionPage(notionSettings.accessToken, notionDatabaseId, note);
-          } catch (error) {
-            console.error('Error creating page for note:', note, error);
-          }
+      const lastSyncElement = document.getElementById('last-sync');
+
+      if (notesToSync.length === 0) {
+        lastSyncElement.textContent = 'Last sync: All notes up to date';
+        return;
+      }
+
+      lastSyncElement.textContent = `Last sync: Syncing ${notesToSync.length} notes...`;
+
+      // Sync each note
+      for (const note of notesToSync) {
+        try {
+          await this.createNotionPage(note, notionSettings);
+          // Mark note as synced
+          await this.updateNote(note.id, { 
+            ...note,
+            syncedToNotion: true,
+            lastSyncTime: Date.now()
+          });
+        } catch (error) {
+          console.error('Error creating page for note:', {
+            noteId: note.id,
+            error: error
+          });
+          throw new Error(`Failed to create Notion page: ${error.message}`);
         }
       }
 
-      // Update last sync time
-      const lastSync = new Date().toISOString();
-      await setStorageData({ lastSync });
-      this.updateSyncStatus(lastSync);
+      // Update sync status
+      lastSyncElement.textContent = `Last sync: Just now`;
 
+      // Refresh notes display
+      await this.loadNotes();
     } catch (error) {
       console.error('Error syncing to Notion:', error);
-      this.errorMessage.textContent = 'Failed to sync with Notion: ' + error.message;
-      this.errorMessage.style.display = 'block';
-      setTimeout(() => {
-        this.errorMessage.style.display = 'none';
-      }, 3000);
-    }
-  }
-
-  async fetchNotionPages(token, databaseId) {
-    try {
-      console.log('Fetching pages with token:', token, 'database:', databaseId);
-      const response = await fetch(`${NOTION_CONFIG.API_URL}/databases/${databaseId}/query`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Notion-Version': NOTION_CONFIG.API_VERSION
-        },
-        body: JSON.stringify({
-          page_size: 100
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Notion API error:', error);
-        throw new Error(`Failed to fetch Notion pages: ${error.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.results;
-    } catch (error) {
-      console.error('Error fetching Notion pages:', error);
+      const lastSyncElement = document.getElementById('last-sync');
+      lastSyncElement.textContent = `Last sync: Error: ${error.message}`;
       throw error;
     }
   }
 
-  async createNotionPage(token, databaseId, note) {
+  async createNotionPage(note, notionSettings) {
     try {
-      console.log('Creating page with token:', token, 'database:', databaseId, 'note:', note);
+      if (!note || !notionSettings) {
+        throw new Error('Invalid note or configuration');
+      }
+
+      const { title, content, url, tags = [], timestamp } = note;
+      
+      const notionTags = Array.isArray(tags) ? tags.map(tag => ({ name: tag })) : [];
+
+      const blocks = this.splitContentIntoBlocks(content);
+
       const response = await fetch(`${NOTION_CONFIG.API_URL}/pages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${notionSettings.accessToken}`,
           'Content-Type': 'application/json',
           'Notion-Version': NOTION_CONFIG.API_VERSION
         },
         body: JSON.stringify({
-          parent: { database_id: databaseId },
+          parent: { database_id: notionSettings.selectedDatabaseId },
           properties: {
-            Title: {
-              title: [{ text: { content: note.title } }]
-            },
-            Content: {
-              rich_text: [{ text: { content: note.content || note.excerpt || '' } }]
-            },
-            URL: {
-              url: note.url
-            },
-            Tags: {
-              multi_select: note.tags.map(tag => ({ name: tag }))
-            },
-            CreatedAt: {
-              date: { start: note.createdAt || new Date().toISOString() }
+            Title: { title: [{ text: { content: title || 'Untitled Note' } }] },
+            Content: { rich_text: [{ text: { content: blocks[0].slice(0, 2000) || '' } }] },
+            URL: { url: url || '' },
+            Tags: { multi_select: notionTags },
+            CreatedAt: { date: { start: new Date(timestamp).toISOString() } }
+          },
+          children: blocks.map(block => ({
+            object: 'block',
+            type: 'paragraph',
+            paragraph: {
+              rich_text: [{ type: 'text', text: { content: block } }]
             }
-          }
+          }))
         })
       });
 
       if (!response.ok) {
         const error = await response.json();
         console.error('Notion API error:', error);
-        throw new Error(`Failed to create Notion page: ${error.message || response.statusText}`);
+        throw new Error(error.message || 'Failed to create Notion page');
       }
 
-      const data = await response.json();
-      console.log('Created Notion page:', data);
-      return data;
+      return await response.json();
     } catch (error) {
-      console.error('Error creating Notion page:', error);
+      console.error('Notion API error:', error);
       throw error;
+    }
+  }
+
+  splitContentIntoBlocks(content) {
+    const maxLength = 2000;
+    const blocks = [];
+    for (let i = 0; i < content.length; i += maxLength) {
+      blocks.push(content.slice(i, i + maxLength));
+    }
+    return blocks;
+  }
+
+  async generateTags(content) {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "generateTags",
+        text: content,
+      });
+
+      if (response && response.error) {
+        throw new Error(response.error);
+      }
+
+      if (response && response.tags) {
+        console.log("Generated tags:", response.tags);
+        return response.tags;
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Error generating tags:", error);
+      return [];
     }
   }
 }

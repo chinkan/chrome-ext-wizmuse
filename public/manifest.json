@@ -9,7 +9,8 @@
         "sidePanel",
         "tabs",
         "unlimitedStorage",
-        "identity"
+        "identity",
+        "scripting"
     ],
     "oauth2": {
         "client_id": "151d872b-594c-80b5-9599-0037a4e95c8d",

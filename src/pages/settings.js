@@ -38,8 +38,8 @@ export async function initializeSettingsPage() {
     await loadInitialSettings(elements);
     
     // Initialize Notion form state
-    const data = await chrome.storage.sync.get(['notionSettings']);
-    const isConnected = data.notionSettings?.connected || false;
+    const {notionSettings} = await getStorageData(['notionSettings']);
+    const isConnected = notionSettings?.connected || false;
     updateNotionFormState(elements, !isConnected);
 }
 
@@ -77,7 +77,7 @@ async function setupEventListeners(elements) {
 async function loadInitialSettings(elements) {
     try {
         // Load saved credentials
-        const data = await chrome.storage.sync.get(['notionClientId', 'notionClientSecret']);
+        const data = await getStorageData(['notionClientId', 'notionClientSecret']);
         const notionClientId = data.notionClientId;
         const notionClientSecret = data.notionClientSecret;
         if (notionClientId) {
@@ -97,7 +97,7 @@ async function loadInitialSettings(elements) {
 async function connectToNotion(elements, clientId, clientSecret) {
     try {
         // Save credentials
-        await chrome.storage.sync.set({
+        await setStorageData({
             notionClientId: clientId,
             notionClientSecret: clientSecret
         });
@@ -131,10 +131,10 @@ async function connectToNotion(elements, clientId, clientSecret) {
                 autoSync: false
             };
             
-            await chrome.storage.sync.set({ notionSettings: notionSettings });
+            await setStorageData({ notionSettings: notionSettings });
             
-            const savedData = await chrome.storage.sync.get(['notionSettings']);
-            if (!savedData.notionSettings?.accessToken) {
+            const {notionSettings: savedData} = await getStorageData(['notionSettings']);
+            if (!savedData?.accessToken) {
                 throw new Error('Failed to save access token');
             }
             
@@ -151,8 +151,7 @@ async function connectToNotion(elements, clientId, clientSecret) {
 
 async function loadNotionDatabases() {
     try {
-        const data = await chrome.storage.sync.get(['notionSettings']);
-        const settings = data.notionSettings;
+        const {notionSettings:settings} = await getStorageData(['notionSettings']);
         
         if (!settings?.accessToken) {
             console.error('No access token found');
@@ -204,7 +203,7 @@ async function loadNotionDatabases() {
 
             if (!settings.selectedDatabaseId) {
                 settings.selectedDatabaseId = responseData.results[0].id;
-                await chrome.storage.sync.set({ notionSettings: settings });
+                await setStorageData({ notionSettings: settings });
             }
 
             if (settings.selectedDatabaseId) {
@@ -230,9 +229,9 @@ async function loadNotionDatabases() {
 
 async function saveNotionToken(tokenData) {
     try {
-        const settings = await chrome.storage.sync.get(['notionSettings']);
+        const {notionSettings: settings} = await getStorageData(['notionSettings']);
         const updatedSettings = {
-            ...settings.notionSettings,
+            ...settings,
             connected: true,
             accessToken: tokenData.access_token,
             workspaceId: tokenData.workspace_id,
@@ -241,11 +240,11 @@ async function saveNotionToken(tokenData) {
             botId: tokenData.bot_id
         };
         
-        await chrome.storage.sync.set({ notionSettings: updatedSettings });
+        await setStorageData({ notionSettings: updatedSettings });
         
         // Verify the save
-        const verifySettings = await chrome.storage.sync.get(['notionSettings']);
-        if (!verifySettings.notionSettings?.accessToken) {
+        const {notionSettings: verifySettings} = await getStorageData(['notionSettings']);
+        if (!verifySettings?.accessToken) {
             throw new Error('Failed to verify saved token');
         }
     } catch (error) {
@@ -255,8 +254,8 @@ async function saveNotionToken(tokenData) {
 }
 
 async function loadNotionSettings() {
-    const data = await chrome.storage.sync.get(['notionSettings']);
-    const settings = data.notionSettings || {
+    const {notionSettings: data} = await getStorageData(['notionSettings']);
+    const settings = data || {
         connected: false,
         autoSync: false
     };
@@ -291,7 +290,7 @@ async function handleNotionConnect() {
         }
 
         // Save credentials
-        await chrome.storage.sync.set({
+        await setStorageData({
             notionClientId: clientId,
             notionClientSecret: clientSecret
         });
@@ -330,10 +329,9 @@ async function handleNotionConnect() {
             if (event.target.value) {
                 try {
                     const databaseId = await createNotionDatabase(tokenData.access_token, event.target.value);
-                    // Save database ID
-                    await chrome.storage.sync.set({
-                        notionDatabaseId: databaseId
-                    });
+                    const {notionSettings} = await getStorageData(['notionSettings']);
+                    notionSettings.selectedDatabaseId = databaseId;
+                    await setStorageData({ notionSettings: notionSettings });
                     alert('Successfully created database in Notion!');
                 } catch (error) {
                     console.error('Error creating database:', error);
@@ -456,13 +454,13 @@ async function createNotionDatabase(token, parentId) {
 }
 
 async function saveNotionSettings() {
-    const data = await chrome.storage.sync.get(['notionSettings']);
-    const settings = data.notionSettings || {};
+    const {notionSettings: data} = await getStorageData(['notionSettings']);
+    const settings = data || {};
     const elements = {
         autoSync: document.getElementById('auto-sync')
     };
     settings.autoSync = elements.autoSync.checked;
-    await chrome.storage.sync.set({ notionSettings: settings });
+    await setStorageData({ notionSettings: settings });
 }
 
 function updateNotionConnectionStatus(connected) {
@@ -499,7 +497,7 @@ function updateNotionFormState(elements, expanded) {
 
 async function exchangeCodeForToken(code) {
     try {
-        const data = await chrome.storage.sync.get(['notionClientId', 'notionClientSecret']);
+        const data = await getStorageData(['notionClientId', 'notionClientSecret']);
         const notionClientId = data.notionClientId;
         const notionClientSecret = data.notionClientSecret;
         
@@ -623,10 +621,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notionDatabase) {
         notionDatabase.addEventListener('change', async (event) => {
             try {
-                const data = await chrome.storage.sync.get(['notionSettings']);
-                const settings = data.notionSettings;
+                const {notionSettings:settings} = await getStorageData(['notionSettings']);
                 settings.selectedDatabaseId = event.target.value;
-                await chrome.storage.sync.set({ notionSettings: settings });
+                await setStorageData({ notionSettings: settings });
             } catch (error) {
                 console.error('Error saving database selection:', error);
             }
