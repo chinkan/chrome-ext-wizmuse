@@ -127,7 +127,7 @@ export function initializePromptsPage() {
                 elements.systemPrompt.value = prompt.systemPrompt;
                 elements.userPrompt.value = prompt.userPrompt;
 
-                elements.promptFormContainer.style.display = 'block';
+                elements.promptFormContainer.style.display = 'flex';
                 elements.addPromptBtn.style.display = 'none';
 
                 isEditing = true;
@@ -159,7 +159,7 @@ export function initializePromptsPage() {
     }
 
     function showAddPromptForm() {
-        elements.promptFormContainer.style.display = 'block';
+        elements.promptFormContainer.style.display = 'flex';
         elements.promptForm.reset();
         elements.addPromptBtn.style.display = 'none';
         isEditing = false;
@@ -170,7 +170,7 @@ export function initializePromptsPage() {
 
     function hidePromptForm() {
         elements.promptFormContainer.style.display = 'none';
-        elements.addPromptBtn.style.display = 'block';
+        elements.addPromptBtn.style.display = 'flex';
         isEditing = false;
         editingIndex = -1;
         elements.promptForm.reset();
@@ -201,10 +201,10 @@ export function initializePromptsPage() {
     }
 
     function saveDefaultPrompt() {
+        console.log('Saving default prompt...', elements.defaultPromptSelect.value);
         const defaultPromptIndex = parseInt(elements.defaultPromptSelect.value);
         setStorageData({
-            defaultPromptIndex:
-                defaultPromptIndex === -1 ? undefined : defaultPromptIndex,
+            defaultPromptIndex: defaultPromptIndex,
         }).then(() => {
             alert('Prompt saved');
         });

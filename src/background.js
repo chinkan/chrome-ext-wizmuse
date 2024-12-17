@@ -6,6 +6,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'summarize') {
         handleSummarize(request, sender, sendResponse);
         return true; // 表示我們會異步發送回應
+    } else if (request.action === 'generateTags') {
+        handleGenerateTags(request, sender, sendResponse);
+        return true;
     }
 });
 
@@ -56,9 +59,57 @@ async function handleSummarize(request, sender, sendResponse) {
     }
 }
 
+async function handleGenerateTags(request, sender, sendResponse) {
+    try {
+        const result = await getStorageData([
+            'llmConfigs',
+            'selectedLLMIndex',
+            'language',
+        ]);
+
+        if (!result.llmConfigs || !result.selectedLLMIndex || !result.language) {
+            throw new Error(
+                'You have not set up your LLM provider and API key. Please go to the options page to set up your LLM provider and API key.'
+            );
+        }
+
+        const defaultConfig = result.llmConfigs[request.selectedIndex || result.selectedLLMIndex];
+        const provider = LLMProviderFactory.getProvider(
+            defaultConfig.provider,
+            defaultConfig
+        );
+
+        // Custom system prompt for tag generation with user's language
+        const systemPrompt = `You are a helpful assistant that generates relevant tags for content. Generate 3-5 concise, relevant tags in ${result.language}. Each tag should be a single word or short phrase. Separate tags with commas. For Example: AI,News,Technology.`;
+        const userPrompt = `Generate tags in ${result.language} for this content:\n${request.text}`;
+
+        const response = await provider.summarize(userPrompt, systemPrompt, defaultConfig.advancedSettings);
+
+        if (!response || typeof response.summary !== 'string') {
+            throw new Error('Invalid response from provider');
+        }
+
+        sendResponse({
+            tags: response.summary.split(',').map(tag => tag.trim()).filter(tag => tag),
+            providerName: defaultConfig.name,
+        });
+    } catch (error) {
+        console.error('Error in handleGenerateTags:', error);
+        sendResponse({ error: error.message });
+    }
+}
+
 chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.runtime.openOptionsPage();
+    }
+    // Check if side panel is supported
+    if (chrome.sidePanel) {
+        // Side panel is supported, set it up
+        chrome.sidePanel.setOptions({
+            enabled: true,
+            path: 'sidepanel.html'
+        });
     }
     if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
         var manifestData = chrome.runtime.getManifest();
@@ -93,5 +144,13 @@ chrome.runtime.onInstalled.addListener(function (details) {
                 setStorageData({ lastVersion: manifestData.version });
             }
         });
+    }
+});
+
+// Handle browser action click
+chrome.action.onClicked.addListener((tab) => {
+    // If side panel is supported, toggle it
+    if (chrome.sidePanel) {
+        chrome.sidePanel.toggle();
     }
 });

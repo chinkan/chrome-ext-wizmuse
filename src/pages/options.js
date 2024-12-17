@@ -135,7 +135,7 @@ export function initializeOptionsPage() {
 
         elements.form.reset();
         elements.optionsContainer.style.display = 'none';
-        elements.addConfigBtn.style.display = 'block';
+        elements.addConfigBtn.style.display = 'flex';
         isEditing = false;
         editingIndex = -1;
         await loadModels();
@@ -164,7 +164,7 @@ export function initializeOptionsPage() {
 
     function hideConfigForm() {
         elements.optionsContainer.style.display = 'none';
-        elements.addConfigBtn.style.display = 'block';
+        elements.addConfigBtn.style.display = 'flex';
         elements.form.reset();
         isEditing = false;
         editingIndex = -1;

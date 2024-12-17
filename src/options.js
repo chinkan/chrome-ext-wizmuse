@@ -1,11 +1,13 @@
+import './options.css';
 import { aboutUs, initializeAboutUsPage } from './pages/about-us.js';
 import { options, initializeOptionsPage } from './pages/options.js';
 import { prompts, initializePromptsPage } from './pages/prompts.js';
 import { history, initializeHistoryPage } from './pages/history.js';
 import { domains, initializeDomainsPage } from './pages/domains.js';
-import { getStorageData, setStorageData } from './utils/storage.js';
+import { settings, initializeSettingsPage } from './pages/settings.js';
+import { getStorageData, setStorageData, getAllStorageData, removeStorageData } from './utils/storage.js';
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const contentDiv = document.getElementById('content');
     const menuItems = document.querySelectorAll('.menu-item');
 
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .querySelector(`[data-page="${pageId}"]`)
             .classList.add('active');
 
-        let pageContent;
+            let pageContent;
         try {
             switch (pageId) {
                 case 'about':
@@ -44,32 +46,81 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'history':
                     pageContent = await history();
                     break;
+                case 'settings':
+                    pageContent = await settings();;
+                    break;
                 default:
-                    pageContent = '<p>頁面不存在</p>';
+                    pageContent = '<p>Page not found</p>';
             }
 
             contentDiv.innerHTML = pageContent;
 
-            // 使用 setTimeout 來確保 DOM 已經更新
-            setTimeout(() => {
-                // 為新載入的頁面初始化所需的功能
-                if (pageId === 'about') {
+            // Initialize page specific functionality
+            switch (pageId) {
+                case 'about':
                     initializeAboutUsPage();
-                } else if (pageId === 'options') {
+                    break;
+                case 'options':
                     initializeOptionsPage();
-                } else if (pageId === 'prompts') {
+                    break;
+                case 'prompts':
                     initializePromptsPage();
-                } else if (pageId === 'domains') {
+                    break;
+                case 'domains':
                     initializeDomainsPage();
-                } else if (pageId === 'history') {
+                    break;
+                case 'history':
                     initializeHistoryPage();
+                    break;
+                case 'settings':
+                    initializeSettingsPage();
+                    break;
                 }
-            }, 0);
-        } catch (error) {
+            } catch (error) {
             console.error('加載頁面時出錯:', error);
             contentDiv.innerHTML = '<p>加載頁面時出錯</p>';
         }
     }
+
+    async function loadPage(pageName) {
+        try {
+            const response = await fetch(`pages/${pageName}.html`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const content = await response.text();
+            return content;
+
+            // Load and execute the page's JavaScript if it exists
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = `pages/${pageName}.js`;
+            document.body.appendChild(script);
+        } catch (error) {
+            console.error('Error loading page:', error);
+            contentDiv.innerHTML = '<p>Error loading page</p>';
+        }
+    }
+
+    // Handle menu item clicks
+    menuItems.forEach(item => {
+        item.addEventListener('click', async () => {
+            // Remove active class from all menu items
+            menuItems.forEach(menuItem => menuItem.classList.remove('active'));
+            
+            // Add active class to clicked item
+            item.classList.add('active');
+
+            // Load the corresponding page
+            const pageName = item.getAttribute('data-page');
+            await changePage(pageName);
+        });
+    });
+
+    // Load default page (about)
+    const defaultPage = 'about';
+    await changePage(defaultPage);
+    document.querySelector(`[data-page="${defaultPage}"]`).classList.add('active');
 });
 
 function checkFirstInstall(callback) {
@@ -104,4 +155,53 @@ function checkFirstInstall(callback) {
             callback();
         }
     });
+}
+
+async function getAllSettings() {
+    const allData = await getAllStorageData();
+    
+    // Extract domain settings
+    const domains = {};
+    for (let key in allData) {
+        if (key.startsWith('domainSettings.')) {
+            const domain = key.split('domainSettings.')[1];
+            domains[domain] = allData[key];
+        }
+    }
+
+    return {
+        domains,
+        prompts: allData.prompts || [],
+        options: {
+            llmConfigs: allData.llmConfigs || [],
+            language: allData.language
+        },
+        defaultPromptIndex: allData.defaultPromptIndex,
+        selectedLLMIndex: allData.selectedLLMIndex,
+        language: allData.language || {}
+    };
+}
+
+async function importSettings(settings) {
+    // First clear existing domain settings
+    const allData = await getAllStorageData();
+    const domainKeys = Object.keys(allData).filter(key => key.startsWith('domainSettings.'));
+    await Promise.all(domainKeys.map(key => removeStorageData(key)));
+
+    // Import domain settings
+    const domainTasks = Object.entries(settings.domains).map(([domain, settings]) => 
+        setStorageData({ [`domainSettings.${domain}`]: settings })
+    );
+
+    // Import other settings
+    const tasks = [
+        ...domainTasks,
+        setStorageData({ prompts: settings.prompts }),
+        setStorageData({ llmConfigs: settings.options.llmConfigs }),
+        setStorageData({ defaultPromptIndex: settings.defaultPromptIndex }),
+        setStorageData({ selectedLLMIndex: settings.selectedLLMIndex }),
+        setStorageData({ language: settings.language })
+    ];
+
+    await Promise.all(tasks);
 }

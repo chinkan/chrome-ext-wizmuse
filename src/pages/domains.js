@@ -121,7 +121,7 @@ export function initializeDomainsPage() {
     }
 
     function showAddDomainForm() {
-        elements.domainFormContainer.style.display = 'block';
+        elements.domainFormContainer.style.display = 'flex';
         elements.domainForm.reset();
         elements.addDomainBtn.style.display = 'none';
         isEditing = false;
@@ -130,7 +130,7 @@ export function initializeDomainsPage() {
 
     function hideDomainForm() {
         elements.domainFormContainer.style.display = 'none';
-        elements.addDomainBtn.style.display = 'block';
+        elements.addDomainBtn.style.display = 'flex';
         isEditing = false;
         editingDomain = '';
         elements.domainForm.reset();
@@ -175,7 +175,7 @@ export function initializeDomainsPage() {
                 elements.domainLLMConfig.value = settings.selectedModelIndex;
                 elements.domainPrompt.value = settings.selectPromptIndex;
 
-                elements.domainFormContainer.style.display = 'block';
+                elements.domainFormContainer.style.display = 'flex';
                 elements.addDomainBtn.style.display = 'none';
                 isEditing = true;
                 editingDomain = domain;

@@ -79,6 +79,27 @@ Thanks for your contribution!
 
 This project is licensed under the GNU General Public License (GPL). You can freely use, modify, and distribute this software as long as you adhere to the terms of the GPL.
 
+## Build System
+
+This project uses Rollup as its build system. The build process is configured to handle multiple entry points, optimize assets, and prepare the extension for production.
+
+### Build Scripts
+
+```bash
+npm run dev    # Start development with watch mode
+npm run build  # Build for production
+npm run clean  # Clean the dist directory
+```
+
+### Key Features
+
+- Multiple entry point bundling for popup, options, sidepanel, and other pages
+- CSS processing with PostCSS and autoprefixer
+- Code minification in production mode
+- Asset copying and management
+- Source maps in development mode
+- Live reload during development
+
 ## Copyright
 
 Copyright (c) 2024 chinkan.ai
@@ -86,4 +107,5 @@ Copyright (c) 2024 chinkan.ai
 ## Acknowledgments
 
 - [youtube-transcript](https://github.com/Kakulukian/youtube-transcript) - For providing the YouTube transcript extraction functionality.
--   [Adamvleggett](https://github.com/adamvleggett) for his [drawdown](https://github.com/adamvleggett/drawdown) library.
+- [Adamvleggett](https://github.com/adamvleggett) for his [drawdown](https://github.com/adamvleggett/drawdown) library.
+- [Easy Markdown Editor](https://github.com/Ionaru/easy-markdown-editor) - For the markdown editor functionality.

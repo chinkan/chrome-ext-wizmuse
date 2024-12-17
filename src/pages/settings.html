@@ -1,0 +1,63 @@
+<div id="settings-page">
+    <h1>Settings</h1>
+
+    <div class="settings-content">
+        <!-- Export Settings Section -->
+        <section id="export-settings" class="settings-section">
+            <h2>Export Settings</h2>
+            <div class="settings-actions">
+                <button id="export-settings-btn" class="settings-btn">
+                    <span class="material-icons">file_download</span>
+                    Export Settings
+                </button>
+                <button id="import-settings-btn" class="settings-btn">
+                    <span class="material-icons">file_upload</span>
+                    Import Settings
+                </button>
+                <input type="file" id="settings-file-input" style="display: none;" accept=".json">
+            </div>
+        </section>
+
+        <!-- Integrations Section -->
+        <section id="integrations" class="settings-section">
+            <h2>Integrations</h2>
+            <div class="integration-card">
+                <img src="/images/notion-logo.svg" alt="Notion" class="integration-logo">
+                <div class="integration-details">
+                    <h3>Notion</h3>
+                    <p>Sync your notes with Notion database</p>
+                    <div id="notion-status" class="connection-status">
+                        Not Connected
+                    </div>
+                    <div id="notion-toggle" class="notion-toggle">
+                        <span class="material-icons">expand_more</span>
+                        <span>Notion Credentials</span>
+                    </div>
+                    <div id="notion-credentials" class="notion-credentials collapsed">
+                        <div class="form-group">
+                            <label for="notion-client-id">Client ID:</label>
+                            <input type="text" id="notion-client-id" class="form-input" placeholder="Enter your Notion Client ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="notion-client-secret">Client Secret:</label>
+                            <input type="password" id="notion-client-secret" class="form-input" placeholder="Enter your Notion Client Secret">
+                        </div>
+                        <button id="connect-notion" class="primary-button">Connect to Notion</button>
+                    </div>
+                </div>
+            </div>
+            <div id="notion-settings" style="display: none;">
+                <div class="form-group">
+                    <label for="notion-database">Select Database:</label>
+                    <select id="notion-database"></select>
+                </div>
+                <div class="form-group">
+                    <label for="auto-sync">
+                        <input type="checkbox" id="auto-sync">
+                        Enable Auto-Sync
+                    </label>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

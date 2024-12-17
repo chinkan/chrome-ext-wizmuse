@@ -1,3 +1,4 @@
+import './popup.css';
 import { getStorageData, setStorageData } from './utils/storage.js';
 
 document.addEventListener('DOMContentLoaded', async function () {
@@ -155,6 +156,27 @@ document.addEventListener('DOMContentLoaded', async function () {
         .getElementById('copy-summary')
         .addEventListener('click', copySummary);
 
+    document
+        .getElementById('toggle-sidepanel')
+        .addEventListener('click', async function() {
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                await chrome.sidePanel.open({ windowId: tab.windowId });
+            } catch (error) {
+                console.error('Error toggling side panel:', error);
+            }
+        });
+
+    document
+        .getElementById('open-options')
+        .addEventListener('click', function () {
+            if (chrome.runtime.openOptionsPage) {
+                chrome.runtime.openOptionsPage();
+            } else {
+                window.open(chrome.runtime.getURL('options.html'));
+            }
+        });
+
     async function copySummary() {
         try {
             const tabs = await chrome.tabs.query({
@@ -240,16 +262,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             }, 500);
         }, 2000);
     }
-
-    document
-        .getElementById('open-options')
-        .addEventListener('click', function () {
-            if (chrome.runtime.openOptionsPage) {
-                chrome.runtime.openOptionsPage();
-            } else {
-                window.open(chrome.runtime.getURL('options.html'));
-            }
-        });
 
     async function showModelSelector(callback) {
         try {

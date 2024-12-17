@@ -39,6 +39,9 @@ class GroqProvider extends LLMProvider {
                 if (response.status === 413 && errorData.error && errorData.error.code === 'rate_limit_exceeded') {
                     throw new Error('RateLimitExceeded: Content is too large for current model');
                 }
+                if (errorData.error && errorData.error.message && errorData.error.message.includes('QUOTA_BYTES quota exceeded')) {
+                    throw new Error('QuotaExceeded: API quota has been exceeded');
+                }
                 throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
             }
 
