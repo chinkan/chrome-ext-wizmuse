@@ -285,7 +285,7 @@ class NotesManager {
       const noteElement = this.notesTemplate.content
         .cloneNode(true)
         .querySelector(".note-item");
-      const plainText = note.content.replace(/[#*`_~\[\]]/g, ""); // Remove markdown syntax
+      const plainText = note.content.replace(/[#*`_~\[\]]/g, "");
       const preview =
         plainText.substring(0, 100) + (plainText.length > 100 ? "..." : "");
 
@@ -294,13 +294,17 @@ class NotesManager {
       noteElement.querySelector(".note-content").textContent = preview;
       noteElement.setAttribute("data-note-id", note.id);
 
-      // Add click event for showing detail view
+      // Add timestamp
+      const timestampElement = document.createElement("div");
+      timestampElement.className = "note-timestamp";
+      timestampElement.textContent = new Date(note.timestamp).toLocaleString();
+      noteElement.appendChild(timestampElement);
+
       noteElement.addEventListener("click", () => this.showNoteDetail(note));
 
-      // Add delete button click handler
       const deleteButton = noteElement.querySelector(".delete-note");
       deleteButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent event from bubbling up to parent
+        e.stopPropagation();
         this.deleteNote(note.id);
       });
 
@@ -319,49 +323,43 @@ class NotesManager {
   }
 
   showNoteDetail(note) {
-
     const detailDialog = document.createElement("dialog");
     detailDialog.className = "note-detail-dialog";
 
     const content = `
-            <div class="note-detail">
-                <div class="note-detail-header">
-                    <h2 class="note-title" contenteditable="true">${
-                      note.title || "Untitled"
-                    }</h2>
-                    <button class="icon-button close-dialog">
-                        <i class="material-icons">close</i>
-                    </button>
-                </div>
-                <div class="note-content" contenteditable="true">${
-                  note.content
-                }</div>
-                <div class="note-detail-footer">
-                    <button class="save-note">Save</button>
-                </div>
-            </div>
-        `;
+      <div class="note-detail">
+        <div class="note-detail-header">
+          <h2 class="note-title" contenteditable="true">${note.title || "Untitled"}</h2>
+          <button class="icon-button close-dialog">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="note-content"></div>
+        <div class="note-tags">
+          ${note.tags ? note.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+        </div>
+        <div class="note-detail-footer">
+          <button class="save-note">Save</button>
+        </div>
+      </div>
+    `;
 
     detailDialog.innerHTML = content;
     document.body.appendChild(detailDialog);
 
-    // Set up event listeners
     const closeBtn = detailDialog.querySelector(".close-dialog");
     const saveBtn = detailDialog.querySelector(".save-note");
     const titleElement = detailDialog.querySelector(".note-title");
     const contentElement = detailDialog.querySelector(".note-content");
-    contentElement.innerHTML="";
+    const tagsContainer = detailDialog.querySelector(".note-tags");
+
     const contentInput = document.createElement("textarea");
     contentInput.textContent = note.content;
     contentElement.appendChild(contentInput);
 
     const easyMDE = new EasyMDE({
       element: contentInput,
-      parsingConfig: {
-        indentWithTabs: false,
-        smartIndent: true,
-        singleLineBreaks: false,
-      },
+      spellChecker: false,
     });
 
     closeBtn.addEventListener("click", () => {
@@ -374,11 +372,11 @@ class NotesManager {
         ...note,
         title: titleElement.textContent,
         content: easyMDE.value(),
+        tags: Array.from(tagsContainer.querySelectorAll('.tag')).map(tag => tag.textContent),
         updatedAt: new Date().toISOString(),
       };
 
       const noteIndex = this.notes.findIndex((n) => n.id === note.id);
-      console.log(updatedNote);
       if (noteIndex !== -1) {
         this.notes[noteIndex] = updatedNote;
         await this.saveNotes(this.notes[noteIndex]);
@@ -387,6 +385,26 @@ class NotesManager {
         detailDialog.remove();
       }
     });
+
+    tagsContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tag')) {
+        const newTag = prompt('Edit tag:', e.target.textContent);
+        if (newTag) e.target.textContent = newTag;
+      }
+    });
+
+    const addTagBtn = document.createElement('button');
+    addTagBtn.textContent = 'Add Tag';
+    addTagBtn.addEventListener('click', () => {
+      const newTag = prompt('Enter new tag:');
+      if (newTag) {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = newTag;
+        tagsContainer.appendChild(tagSpan);
+      }
+    });
+    tagsContainer.appendChild(addTagBtn);
 
     detailDialog.showModal();
   }
@@ -405,7 +423,6 @@ class NotesManager {
         ...note,
         ...updates,
         key: noteKey,
-        timestamp: Date.now() // Update timestamp on edit
       };
 
       await setStorageData({
@@ -481,7 +498,7 @@ class NotesManager {
       
       const notesToSync = this.notes.filter(note => {
         const noteCreatedTime = new Date(note.timestamp).getTime();
-        return noteCreatedTime > lastSyncTime || note.timestamp > lastSyncTime;
+        return noteCreatedTime > lastSyncTime || !note.lastSyncTime;
       });
 
       const lastSyncElement = document.getElementById('last-sync');
@@ -514,6 +531,10 @@ class NotesManager {
 
       // Update sync status
       lastSyncElement.textContent = `Last sync: Just now`;
+
+      await setStorageData({ lastSync: Date.now() });
+
+      this.initializeSync();
 
       // Refresh notes display
       await this.loadNotes();
