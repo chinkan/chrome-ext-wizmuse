@@ -196,10 +196,23 @@ body {
 }
 
 .error-message {
-  padding: 8px;
-  color: #ef4444;
-  background-color: #fee2e2;
-  border-bottom: 1px solid #fecaca;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  background-color: #ef4444;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.error-message.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 /* Icons */
@@ -319,4 +332,77 @@ body {
     border-radius: 12px;
     font-size: 12px;
     color: #495057;
+}
+
+.note-tags-container {
+  margin: 16px 0;
+}
+
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #e5e7eb;
+  color: var(--text-gray-900);
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.tag .remove-tag {
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-gray-600);
+  transition: color 0.2s;
+}
+
+.tag .remove-tag:hover {
+  color: #ef4444;
+}
+
+.add-tag-container {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-input {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.tag-input:focus {
+  border-color: var(--primary-color);
+}
+
+.add-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-tag-btn:hover {
+  background-color: #2563eb;
+}
+
+.add-tag-btn i {
+  font-size: 20px;
 }

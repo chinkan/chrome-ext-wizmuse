@@ -54,12 +54,21 @@ class NotesManager {
     });
   }
 
-  showError(message, duration = 3000) {
-    this.errorMessage.textContent = message;
-    this.errorMessage.style.display = "block";
+  showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    
+    document.body.appendChild(errorDiv);
+    
     setTimeout(() => {
-      this.errorMessage.style.display = "none";
-    }, duration);
+      errorDiv.classList.add('show');
+    }, 100);
+
+    setTimeout(() => {
+      errorDiv.classList.remove('show');
+      setTimeout(() => errorDiv.remove(), 300);
+    }, 5000);
   }
 
   showLoading(show = true) {
@@ -198,6 +207,16 @@ class NotesManager {
         url: url,
         title: title
       });
+
+      let errorMessage = "Failed to summarize the website. Please try again later.";
+      
+      if (error.message.includes('QuotaExceeded')) {
+        errorMessage = "API quota has been exceeded. Please try again later.";
+      } else if (error.message.includes('RateLimitExceeded')) {
+        errorMessage = "Content is too large to summarize. Please try with a smaller selection.";
+      }
+
+      this.showError(errorMessage);
       throw error;
     }
   }
@@ -313,7 +332,18 @@ class NotesManager {
         note.tags.forEach((tag) => {
           const tagElement = document.createElement("span");
           tagElement.className = "tag";
-          tagElement.textContent = tag;
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.value = tag;
+          const tagTextSpan = document.createElement('span');
+          tagTextSpan.className = 'tag-text';
+          tagTextSpan.textContent = tag;
+          const removeIcon = document.createElement('i');
+          removeIcon.className = 'material-icons remove-tag';
+          removeIcon.textContent = 'close';
+          tagElement.appendChild(hiddenInput);
+          tagElement.appendChild(tagTextSpan);
+          tagElement.appendChild(removeIcon);
           tagsContainer.appendChild(tagElement);
         });
       }
@@ -335,8 +365,21 @@ class NotesManager {
           </button>
         </div>
         <div class="note-content"></div>
-        <div class="note-tags">
-          ${note.tags ? note.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+        <div class="note-tags-container">
+          <div class="note-tags">
+            ${note.tags ? note.tags.map(tag => `
+              <span class="tag">
+                <input type="hidden" value="${tag}">
+                <span class="tag-text">${tag}</span>
+                <i class="material-icons remove-tag">close</i>
+              </span>`).join('') : ''}
+          </div>
+          <div class="add-tag-container">
+            <input type="text" class="tag-input" placeholder="Add new tag...">
+            <button class="add-tag-btn">
+              <i class="material-icons">add</i>
+            </button>
+          </div>
         </div>
         <div class="note-detail-footer">
           <button class="save-note">Save</button>
@@ -352,6 +395,8 @@ class NotesManager {
     const titleElement = detailDialog.querySelector(".note-title");
     const contentElement = detailDialog.querySelector(".note-content");
     const tagsContainer = detailDialog.querySelector(".note-tags");
+    const tagInput = detailDialog.querySelector(".tag-input");
+    const addTagBtn = detailDialog.querySelector(".add-tag-btn");
 
     const contentInput = document.createElement("textarea");
     contentInput.textContent = note.content;
@@ -360,6 +405,45 @@ class NotesManager {
     const easyMDE = new EasyMDE({
       element: contentInput,
       spellChecker: false,
+    });
+
+    const addTag = (tagText) => {
+      if (tagText.trim()) {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.value = tagText.trim();
+        const tagTextSpan = document.createElement('span');
+        tagTextSpan.className = 'tag-text';
+        tagTextSpan.textContent = tagText.trim();
+        const removeIcon = document.createElement('i');
+        removeIcon.className = 'material-icons remove-tag';
+        removeIcon.textContent = 'close';
+        
+        tagSpan.appendChild(hiddenInput);
+        tagSpan.appendChild(tagTextSpan);
+        tagSpan.appendChild(removeIcon);
+        tagsContainer.appendChild(tagSpan);
+        tagInput.value = '';
+      }
+    };
+
+    addTagBtn.addEventListener('click', () => {
+      addTag(tagInput.value);
+    });
+
+    tagInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(tagInput.value);
+      }
+    });
+
+    tagsContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-tag')) {
+        e.target.parentElement.remove();
+      }
     });
 
     closeBtn.addEventListener("click", () => {
@@ -372,7 +456,7 @@ class NotesManager {
         ...note,
         title: titleElement.textContent,
         content: easyMDE.value(),
-        tags: Array.from(tagsContainer.querySelectorAll('.tag')).map(tag => tag.textContent),
+        tags: Array.from(tagsContainer.querySelectorAll('.tag input[type="hidden"]')).map(input => input.value),
         updatedAt: new Date().toISOString(),
       };
 
@@ -385,26 +469,6 @@ class NotesManager {
         detailDialog.remove();
       }
     });
-
-    tagsContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tag')) {
-        const newTag = prompt('Edit tag:', e.target.textContent);
-        if (newTag) e.target.textContent = newTag;
-      }
-    });
-
-    const addTagBtn = document.createElement('button');
-    addTagBtn.textContent = 'Add Tag';
-    addTagBtn.addEventListener('click', () => {
-      const newTag = prompt('Enter new tag:');
-      if (newTag) {
-        const tagSpan = document.createElement('span');
-        tagSpan.className = 'tag';
-        tagSpan.textContent = newTag;
-        tagsContainer.appendChild(tagSpan);
-      }
-    });
-    tagsContainer.appendChild(addTagBtn);
 
     detailDialog.showModal();
   }
