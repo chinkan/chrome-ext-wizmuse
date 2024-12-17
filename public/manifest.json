@@ -48,6 +48,5 @@
             "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
-    ],
-    "key": "pkkbpmbapimdajbpfdccdaifnedeknlo"
+    ]
 }
